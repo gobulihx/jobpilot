@@ -7,7 +7,6 @@ import os
 import shutil
 import socket
 import sys
-from pathlib import Path
 
 from . import home
 

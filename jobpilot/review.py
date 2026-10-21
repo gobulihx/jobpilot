@@ -37,12 +37,24 @@ def render(plan: dict, masked: bool = True) -> str:
             lines.append(f"  {label}：{value}{extra}")
             if a.get("strategy") == "real_keys":
                 pass
-    if plan.get("unmapped"):
+    blocking = {b.get("cid") for b in plan.get("blocking", [])}
+    required = [u for u in plan.get("unmapped", []) if u.get("cid") in blocking]
+    others = [u for u in plan.get("unmapped", []) if u.get("cid") not in blocking]
+    if required:
         lines.append("")
-        lines.append("【还要你补/确认】")
-        for u in plan["unmapped"]:
+        lines.append(f"【先补这几项，才能开始填（{len(required)} 项）】")
+        for u in required:
             hint = f"，建议「{u.get('suggest')}」" if u.get("suggest") else ""
             lines.append(f"  · {u['label']}：{u['reason']}{hint}")
+    if others:
+        lines.append("")
+        lines.append("【其他要确认的】")
+        for u in others:
+            hint = f"，建议「{u.get('suggest')}」" if u.get("suggest") else ""
+            lines.append(f"  · {u['label']}：{u['reason']}{hint}")
+    if plan.get("optional_missing"):
+        lines.append("")
+        lines.append(f"【选填没填（{len(plan['optional_missing'])} 项，可以跳过）】")
     if plan.get("warnings"):
         lines.append("")
         for w in plan["warnings"]:

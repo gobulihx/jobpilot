@@ -143,6 +143,34 @@ def missing(values: dict, ids: tuple[str, ...] | list[str] | None = None) -> lis
     return out
 
 
+def check_value(path: str, raw) -> str | None:
+    """检查单个值能不能写；返回一句问题，没问题返回 None。"""
+    f = schema.field_for(path)
+    if f is None:
+        return f"{path}: 不认识这个字段"
+    if raw is None or raw == "":
+        return None
+    if f.type == "number":
+        try:
+            float(raw)
+        except (TypeError, ValueError):
+            return f"{f.label}: 要填数字"
+    if f.type == "bool":
+        if not isinstance(raw, bool) and str(raw) not in ("是", "否", "true", "false"):
+            return f"{f.label}: 填「是」或「否」"
+    if f.type == "date" and not _DATE_RE.match(str(raw)):
+        return f"{f.label}: 日期写成 2000-01-01"
+    if f.type == "month" and not _MONTH_RE.match(str(raw)):
+        return f"{f.label}: 月份写成 2026-11"
+    if f.type == "tel" and not _TEL_RE.match(str(raw)):
+        return f"{f.label}: 电话格式不对"
+    if f.type == "email" and not _EMAIL_RE.match(str(raw)):
+        return f"{f.label}: 邮箱格式不对"
+    if f.maxlen and isinstance(raw, str) and len(raw) > f.maxlen:
+        return f"{f.label}: 超过 {f.maxlen} 字"
+    return None
+
+
 def validate(values: dict) -> list[str]:
     """返回问题列表（内部用，不直接给用户看）。"""
     issues: list[str] = []

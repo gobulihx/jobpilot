@@ -125,6 +125,8 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
     alias_index = schema.alias_index()
     steps = []
     unmapped: list[dict] = []
+    optional_missing: list[dict] = []
+    blocking: list[dict] = []
     warnings: list[str] = []
     total = 0
 
@@ -143,10 +145,15 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
             conf = m["confidence"]
             if not m["canonical"]:
                 if c.get("required") or c["kind"] not in ("text",):
-                    unmapped.append({
+                    item = {
                         "cid": c["cid"], "label": c["label"], "module": mod,
                         "reason": m["reason"], "options": m.get("options", []),
-                    })
+                        "required": bool(c.get("required")), "canonical": None,
+                    }
+                    unmapped.append(item)
+                    if c.get("required"):
+                        blocking.append({"cid": c["cid"], "label": c["label"],
+                                         "reason": m["reason"], "path": None})
                 continue
             if conf < SUGGEST:
                 unmapped.append({"cid": c["cid"], "label": c["label"], "module": mod,
@@ -156,9 +163,21 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
             path = _concrete(m["canonical"], c, card)
             ok, val = values_mod.resolve(vals, path)
             if not ok:
+                f = schema.field_for(path)
+                item = {
+                    "cid": c["cid"], "label": c["label"], "module": mod,
+                    "reason": "缺值", "canonical": path,
+                    "required": bool(c.get("required")),
+                    "type": f.type if f else "text",
+                    "maxlen": f.maxlen if f else None,
+                }
                 if c.get("required"):
-                    unmapped.append({"cid": c["cid"], "label": c["label"], "module": mod,
-                                     "reason": "缺值", "canonical": path})
+                    unmapped.append(item)
+                    blocking.append({"cid": c["cid"], "label": c["label"],
+                                     "reason": "缺值", "path": path,
+                                     "type": item["type"], "maxlen": item["maxlen"]})
+                else:
+                    optional_missing.append(item)
                 continue
 
             entry = values_mod.get_entry(vals, path) or {}
@@ -175,6 +194,9 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 action["needs_confirm"] = True
                 unmapped.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                  "reason": "匹配把握不大，请确认", "suggest": m["canonical"]})
+                if c.get("required"):
+                    blocking.append({"cid": c["cid"], "label": c["label"],
+                                     "reason": "匹配把握不大", "path": path})
             actions.append(action)
             total += 1
             if action["op"] in ("type", "select"):
@@ -196,6 +218,8 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
         "dom_fingerprint": form.get("dom_fingerprint", ""),
         "steps": steps,
         "unmapped": unmapped,
+        "optional_missing": optional_missing,
+        "blocking": blocking,
         "warnings": warnings,
         "guards": {"submit": "blocked" if not card.get("submit", {}).get("enabled") else "confirm"},
         "stats": {"actions": total, "unmapped": len(unmapped), "modules": len(steps)},

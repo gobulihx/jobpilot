@@ -115,11 +115,31 @@ def cmd_values(args) -> int:
         if not args.path or args.value is None:
             _print("用法：values set 字段路径 值")
             return 2
+        if issue := values_mod.check_value(args.path, args.value):
+            _print(issue)
+            return 2
         values_mod.set_value(vals, args.path, args.value)
         home.write_json(_values_path(), vals)
         _print(f"记下了：{schema.label_for(args.path)}")
         return 0
-    _print("支持 show / missing / set")
+    if args.action == "set-many":
+        if not args.file:
+            _print("给一个答案文件（--file answers.json）")
+            return 2
+        data = _load_json_arg(args.file, {})
+        issues = [(path, values_mod.check_value(path, raw)) for path, raw in data.items()]
+        issues = [(path, msg) for path, msg in issues if msg]
+        if issues:
+            for path, msg in issues:
+                _print(f"  · {msg}")
+            _print("这几项不太对，改一下再给人家。")
+            return 2
+        for path, raw in data.items():
+            values_mod.set_value(vals, path, raw)
+        home.write_json(_values_path(), vals)
+        _print(f"记下了 {len(data)} 项，下次不会再问。")
+        return 0
+    _print("支持 show / missing / set / set-many")
     return 2
 
 
@@ -175,6 +195,8 @@ def cmd_plan(args) -> int:
     out = Path(args.out).expanduser() if args.out else home.run_dir(run_id) / "fill-plan.json"
     home.write_json(out, compiled)
     _print(f"{compiled['stats']['actions']} 项可以填，{compiled['stats']['unmapped']} 项要你确认。")
+    if compiled.get("blocking"):
+        _print(f"必填还差 {len(compiled['blocking'])} 项，补齐再填。")
     _print(f"计划放在：{out}")
     return 0
 
@@ -218,6 +240,23 @@ def cmd_run(args) -> int:
         _print("没找到计划。")
         return 2
     vals = home.read_json(_values_path(), values_mod.empty()) or values_mod.empty()
+
+    blocking = compiled.get("blocking") or []
+    # 值补过之后旧计划仍然记着缺口：先让用户重新生成，别拿旧计划硬填
+    still = [b for b in blocking
+             if not (b.get("path") and values_mod.resolve(vals, b["path"])[0])]
+    if blocking and not still and not args.force:
+        _print("资料补过了，这份计划还是旧的。人家按新资料重新生成一份再填。")
+        return 2
+    if still and not args.force:
+        _print(f"先别填，还差 {len(still)} 个必填项：")
+        for item in still[:5]:
+            _print(f"  · {item['label']}：{item['reason']}")
+        if len(still) > 5:
+            _print(f"  ……还有 {len(still) - 5} 项")
+        _print("补完人家再开始，省得你填一半卡住。")
+        return 2
+
     state_path = home.run_dir(compiled["run_id"]) / "run-state.json"
 
     if args.backend == "fake":
@@ -440,9 +479,10 @@ def build_parser() -> argparse.ArgumentParser:
     i.set_defaults(func=cmd_init)
 
     v = sub.add_parser("values", help="看/补字段")
-    v.add_argument("action", choices=["show", "missing", "set"])
+    v.add_argument("action", choices=["show", "missing", "set", "set-many"])
     v.add_argument("path", nargs="?")
     v.add_argument("value", nargs="?")
+    v.add_argument("--file")
     v.add_argument("--no-mask", action="store_true")
     v.set_defaults(func=cmd_values)
 
@@ -477,6 +517,7 @@ def build_parser() -> argparse.ArgumentParser:
     rn.add_argument("plan")
     rn.add_argument("--backend", choices=["fake", "cdp"], default="cdp")
     rn.add_argument("--save-draft", action="store_true")
+    rn.add_argument("--force", action="store_true", help="必填没补齐也先填")
     rn.set_defaults(func=cmd_run)
 
     ve = sub.add_parser("verify", help="回读核对")

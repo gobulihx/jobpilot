@@ -43,6 +43,20 @@ class PlanTest(unittest.TestCase):
         self.assertIn("身高（cm）", labels)
         self.assertIn("是否服从调剂", labels)
 
+    def test_blocking_lists_required_gaps(self):
+        p = build()
+        self.assertEqual(len(p["blocking"]), 2)
+        self.assertEqual({b["label"] for b in p["blocking"]}, {"身高（cm）", "是否服从调剂"})
+        self.assertTrue(all(b["reason"] for b in p["blocking"]))
+        self.assertEqual(p["optional_missing"], [])
+
+    def test_optional_missing_is_not_blocking(self):
+        raw = json.loads(FIX.read_text(encoding="utf-8"))
+        raw["controls"] = [{"label": "爱好", "kind": "text", "required": False}]
+        p = build(form=raw)
+        self.assertEqual(p["blocking"], [])
+        self.assertEqual(len(p["optional_missing"]), 1)
+
     def test_long_value_uses_short_alias(self):
         vals = profile._seed_values(profile.DEMO_PROFILE)
         values.set_value(vals, "education.0.school", "这是一个特别特别特别特别特别长的学校名字用来测试")

@@ -31,6 +31,15 @@ class ValuesTest(unittest.TestCase):
         id_row = [r for r in rows if r["path"] == "person.id_no"][0]
         self.assertNotIn("199901011234", str(id_row["value"]))
 
+    def test_check_value(self):
+        self.assertIsNone(values.check_value("person.height", "180"))
+        self.assertIsNotNone(values.check_value("person.height", "高"))
+        self.assertIsNone(values.check_value("person.birth_date", "2002-02-15"))
+        self.assertIsNotNone(values.check_value("person.birth_date", "2002/02/15"))
+        self.assertIsNotNone(values.check_value("education.0.school", "字" * 30))
+        self.assertIsNone(values.check_value("intent.adjust", "是"))
+        self.assertIsNotNone(values.check_value("intent.adjust", "也许"))
+
     def test_validate_flags_bad_date(self):
         values.set_value(self.v, "person.birth_date", "1999/01/01", type_="date")
         issues = values.validate(self.v)

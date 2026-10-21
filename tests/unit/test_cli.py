@@ -89,9 +89,40 @@ class CliTest(unittest.TestCase):
         plan_path = Path(self.home) / "plan.json"
         self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
                      "--card", "element-ui", "--out", str(plan_path))
+
+        # 必填没补齐：拒绝开始，并说清差什么
+        code, out = self.run_cli("run", str(plan_path), "--backend", "fake")
+        self.assertEqual(code, 2)
+        self.assertIn("必填", out)
+        self.assertIn("身高", out)
+
+        # 一次补两题，写完再填
+        answers = Path(self.home) / "answers.json"
+        answers.write_text(json.dumps({"person.height": "180", "intent.adjust": "是"}),
+                           encoding="utf-8")
+        code, out = self.run_cli("values", "set-many", "--file", str(answers))
+        self.assertEqual(code, 0)
+        self.assertIn("记下了 2 项", out)
+
+        # 旧计划还是旧的：先提示重新生成
+        code, out = self.run_cli("run", str(plan_path), "--backend", "fake")
+        self.assertEqual(code, 2)
+        self.assertIn("重新生成", out)
+
+        # 重新生成后就能填了
+        self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
+                     "--card", "element-ui", "--out", str(plan_path))
         code, out = self.run_cli("run", str(plan_path), "--backend", "fake")
         self.assertEqual(code, 0)
         self.assertIn("停在提交前", out)
+
+    def test_set_many_rejects_bad_value(self):
+        self.run_cli("init", "--demo")
+        answers = Path(self.home) / "bad.json"
+        answers.write_text(json.dumps({"person.height": "很高"}), encoding="utf-8")
+        code, out = self.run_cli("values", "set-many", "--file", str(answers))
+        self.assertEqual(code, 2)
+        self.assertIn("数字", out)
 
     def test_ledger_and_export(self):
         self.assertEqual(self.run_cli("ledger", "add", "--company", "甲", "--position", "岗")[0], 0)
