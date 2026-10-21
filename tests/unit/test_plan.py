@@ -1,3 +1,4 @@
+# jobpilot-privacy-allow
 import json
 import unittest
 from pathlib import Path
@@ -179,6 +180,17 @@ class PlanTest(unittest.TestCase):
         p = build(vals=vals, form=raw)
         self.assertEqual(len(p["blocking"]), 2)
         self.assertEqual(p["optional_missing"], [])
+
+    def test_review_with_select_options_does_not_crash(self):
+        from jobpilot import review
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        values.set_value(vals, "education.0.level", "大专")
+        raw = {"url": "x", "module": "教育经历",
+               "controls": [{"label": "最高学历", "kind": "enum", "required": True,
+                             "options": ["本科", "硕士", "博士"]}]}
+        p = build(vals=vals, form=raw)
+        text = review.render(p)
+        self.assertIn("可选", text)
 
     def test_untagged_required_blocks(self):
         raw = {"url": "x", "module": "基本信息",

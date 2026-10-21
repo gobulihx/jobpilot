@@ -1,3 +1,4 @@
+# jobpilot-privacy-allow
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,6 +19,10 @@ class PrivacyTest(unittest.TestCase):
     def test_scan_text(self):
         hits = privacy.scan_text("身份证 110101199901011234 手机 13800001234 邮箱 a@b.com")
         self.assertEqual(set(hits), {"身份证号", "手机号", "邮箱"})
+
+    def test_mask_paths(self):
+        text = privacy.mask_paths("/Users/alice/Desktop/x")
+        self.assertEqual(text, "/Users/<user>/Desktop/x")
 
     def test_scan_secrets(self):
         self.assertIn("GitHub Token", privacy.scan_secrets("ghp_" + "a" * 36))

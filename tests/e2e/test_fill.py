@@ -1,3 +1,4 @@
+# jobpilot-privacy-allow
 """端到端：验证「直接赋值不生效、真实键盘输入才生效」。
 没有装 playwright 或浏览器时自动跳过。"""
 

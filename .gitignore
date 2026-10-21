@@ -1,13 +1,13 @@
 # 个人数据：绝不进仓库
-profile.json
-values.json
-capabilities.json
-ledger.db
-runs/
-exports/
-materials/
-sites/
-logs/
+/profile.json
+/values.json
+/capabilities.json
+/ledger.db
+/runs/
+/exports/
+/materials/
+/sites/
+/logs/
 *.pdf
 *.docx
 *.xlsx

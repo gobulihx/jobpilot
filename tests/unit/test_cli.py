@@ -1,3 +1,4 @@
+# jobpilot-privacy-allow
 import io
 import json
 import os
@@ -79,6 +80,19 @@ class CliTest(unittest.TestCase):
         self.assertNotIn("name", data["person"])
         self.assertNotIn("phone", data.get("contact", {}))
         self.assertEqual(values_missing(data), [])
+
+    def test_init_answers_rejects_bad_value(self):
+        answers = Path(self.home) / "bad.json"
+        answers.write_text(json.dumps({"contact.phone": "138xxxx0000"}), encoding="utf-8")
+        code, out = self.run_cli("init", "--answers", str(answers))
+        self.assertEqual(code, 2)
+        self.assertIn("电话", out)
+        self.assertFalse((Path(self.home) / "values.json").exists())
+
+    def test_demo_does_not_overwrite(self):
+        self.assertEqual(self.run_cli("init", "--demo")[0], 0)
+        self.assertEqual(self.run_cli("init", "--demo")[0], 2)
+        self.assertEqual(self.run_cli("demo")[0], 2)
 
     def test_demo_end_to_end(self):
         code, out = self.run_cli("demo")

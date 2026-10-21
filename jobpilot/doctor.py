@@ -35,7 +35,7 @@ def capabilities() -> dict:
     return {
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         "python_ok": sys.version_info >= (3, 11),
-        "home": str(root),
+        "home": "~/.jobpilot",
         "home_writable": writable,
         "xlsx": _module("openpyxl"),
         "browser_installed": _module("playwright"),
@@ -70,8 +70,14 @@ def run() -> dict:
 
 
 def install_hint() -> str:
-    return ("想自动填表：\n"
-            "  python3 -m pip install playwright\n"
-            "  python3 -m playwright install chromium\n"
-            "想用已经开着的 Chrome（macOS）：\n"
-            "  open -na 'Google Chrome' --args --remote-debugging-port=9222")
+    lines = [
+        "想自动填表：",
+        "  python3 -m pip install playwright",
+        "  python3 -m playwright install chromium",
+    ]
+    if sys.platform == "darwin":
+        lines += ["想用已经开着的 Chrome：",
+                  "  open -na 'Google Chrome' --args --remote-debugging-port=9222"]
+    else:
+        lines.append("想用已经开着的 Chrome：用 --remote-debugging-port=9222 启动它。")
+    return "\n".join(lines)

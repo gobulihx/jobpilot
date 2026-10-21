@@ -1,3 +1,4 @@
+# jobpilot-privacy-allow
 import json
 import unittest
 from pathlib import Path

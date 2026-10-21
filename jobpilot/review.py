@@ -57,9 +57,9 @@ def _section(lines: list[str], title: str, items: list[dict], limit: int | None 
             suggest = f"，建议「{u['suggest']}」" if u.get("suggest") else ""
             options = u.get("options") or []
             if options:
-                shown = "、".join(str(x) for x in options[:6])
+                opts_text = "、".join(str(x) for x in options[:6])
                 more = " 等" if len(options) > 6 else ""
-                suggest += f"；可选：{shown}{more}"
+                suggest += f"；可选：{opts_text}{more}"
             lines.append(f"  · {u['label']}{hint}：{_reason(u)}{suggest}")
             shown += 1
     if limit is not None and len(items) > limit:
@@ -72,7 +72,7 @@ def render(plan: dict, masked: bool = True) -> str:
     lines = []
     total = plan.get("stats", {}).get("actions", 0)
     if total:
-        lines.append(f"共 {total} 项，准备填 {plan.get('url', '这个页面')}。")
+        lines.append(f"共 {total} 项，准备填 {plan.get('url') or '这个页面'}。")
     else:
         lines.append("这一页没有能自动填的字段，先看看下面缺什么。")
     for step in plan.get("steps", []):

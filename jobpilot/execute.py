@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from . import humanize
+from . import home, humanize
 from . import values as values_mod
 
 
@@ -100,8 +100,10 @@ def run_plan(plan: dict, vals: dict, backend, state_path: Path | None = None,
             try:
                 resolved = _resolve_action(plan, action, vals)
             except ExecuteError as exc:
+                message = (humanize.say("stale_plan") if exc.code == "stale_plan"
+                           else humanize.say("missing_value", n=1))
                 results.append({
-                    "aid": aid, "ok": False, "message": humanize.say("missing_value", n=1),
+                    "aid": aid, "ok": False, "message": message,
                     "code": exc.code,
                     "gap": {"cid": action["target"].get("cid"),
                             "label": action["target"].get("label", ""),
@@ -142,8 +144,7 @@ def run_plan(plan: dict, vals: dict, backend, state_path: Path | None = None,
     state["results"] = results
     if state_path:
         Path(state_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(state_path).write_text(json.dumps(state, ensure_ascii=False, indent=2),
-                                    encoding="utf-8")
+        home.write_text(Path(state_path), json.dumps(state, ensure_ascii=False, indent=2))
     return {
         "ok": not failed,
         "done": len(done),

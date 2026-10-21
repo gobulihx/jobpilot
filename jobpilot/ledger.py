@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import sqlite3
 import unicodedata
@@ -42,6 +43,10 @@ class Ledger:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
+        try:
+            os.chmod(self.path, 0o600)
+        except OSError:
+            pass
         self._init()
 
     def _init(self):
@@ -94,6 +99,8 @@ class Ledger:
             raise ValueError(f"未知状态 {status}")
         app_id = key_of(company, position, city, batch)
         now = _now()
+        prev = self.conn.execute(
+            "SELECT status FROM applications WHERE id=?", (app_id,)).fetchone()
         self.conn.execute("""
           INSERT INTO applications
             (id, company, position, city, batch, url, source, status, submit_mode,
@@ -106,6 +113,9 @@ class Ledger:
             site = COALESCE(NULLIF(excluded.site, ''), applications.site),
             external_id = COALESCE(NULLIF(excluded.external_id, ''), applications.external_id),
             note = COALESCE(NULLIF(excluded.note, ''), applications.note),
+            status = CASE WHEN excluded.status != 'draft' THEN excluded.status
+                          ELSE applications.status END,
+            applied_at = COALESCE(applications.applied_at, excluded.applied_at),
             updated_at = excluded.updated_at
         """, (app_id, company, position, city, batch, url, source, status, submit_mode,
               now, now, now if status in _SUB_STATUS else None,
@@ -118,6 +128,10 @@ class Ledger:
             self.conn.execute(
                 "INSERT INTO events(app_id, ts, type, note) VALUES (?,?,?,?)",
                 (app_id, now, status, "建档"))
+        elif status != "draft" and prev and prev["status"] != status:
+            self.conn.execute(
+                "INSERT INTO events(app_id, ts, type, note) VALUES (?,?,?,?)",
+                (app_id, now, status, "更新"))
         self.conn.commit()
         return app_id, first
 

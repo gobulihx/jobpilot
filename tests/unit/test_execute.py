@@ -48,6 +48,7 @@ class ExecuteTest(unittest.TestCase):
         result = run_plan(p, vals, FakeBackend())
         self.assertFalse(result["ok"])
         self.assertEqual(result["failed"][0]["code"], "stale_plan")
+        self.assertIn("旧", result["failed"][0]["message"])
 
     def test_fail_fast_and_resume(self):
         p, vals = make_plan()
@@ -97,6 +98,7 @@ class ExecuteTest(unittest.TestCase):
         result = run_plan(p, vals, FakeBackend())
         self.assertFalse(result["ok"])
         self.assertEqual(result["failed"][0]["code"], "stale_plan")
+        self.assertIn("旧", result["failed"][0]["message"])
 
 
 if __name__ == "__main__":

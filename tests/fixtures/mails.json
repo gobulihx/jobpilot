@@ -1,7 +1,21 @@
 [
-  {"msgid": "m1", "from": "hr@example-bank.com", "subject": "示例银行 2027 校园招聘笔试通知",
-   "snippet": "请于 10 月 25 日参加在线笔试"},
-  {"msgid": "m2", "from": "campus@example-sec.com", "subject": "面试邀请",
-   "snippet": "邀请您参加初面"},
-  {"msgid": "m3", "from": "news@example.com", "subject": "本周行业资讯", "snippet": "无关邮件"}
+  {
+    "msgid": "m1",
+    "from": "hr@example-bank.com",
+    "subject": "示例银行 2027 校园招聘笔试通知",
+    "snippet": "请于 10 月 25 日参加在线笔试",
+    "note": "jobpilot-privacy-allow"
+  },
+  {
+    "msgid": "m2",
+    "from": "campus@example-sec.com",
+    "subject": "面试邀请",
+    "snippet": "邀请您参加初面"
+  },
+  {
+    "msgid": "m3",
+    "from": "news@example.com",
+    "subject": "本周行业资讯",
+    "snippet": "无关邮件"
+  }
 ]

@@ -17,7 +17,7 @@ description: 求职流水线：建档、找岗、筛岗、网申填表、投递�
 | 今天有什么能投的 | 找岗 → 筛岗，给三档结论 |
 | 这个岗位值不值得投 | 对照硬门槛，给推荐投/备选/不投 |
 | 投这个 | probe → plan → review → run/sheet |
-| 有回音吗 | 取邮件 → inbox，提议改状态 |
+| 有回音吗 | 读本地邮件 → inbox，提议改状态 |
 | 我还缺什么 | 查一下缺项，翻译成人话 |
 
 ## 说话有点人味
@@ -59,9 +59,12 @@ description: 求职流水线：建档、找岗、筛岗、网申填表、投递�
    ```
    分 4 轮问，每轮 3 个，只收 12 个字段。问完写成 `answers.json`（键是 path）：
    ```json
-   {"person.name": "张三", "contact.phone": "138xxxx0000",
-    "contact.email": "你的邮箱", "education.0.school": "示例大学",
-    "intent.directions": "风险,数据"}
+   {"education.0.level": "硕士", "education.0.school": "示例大学",
+    "education.0.major": "金融科技", "education.0.grad_date": "2027-06",
+    "intent.directions": "风险,数据", "intent.cities": "杭州,上海",
+    "intent.salary_min": "20", "person.english_level": "CET6",
+    "flags.fresh_grad": "是", "intent.employer_types": "银行,券商",
+    "intent.exclude": "", "intent.available_from": "2027-07"}
    ```
    再导入：
    ```bash

@@ -62,6 +62,19 @@ def scan_secrets(text: str) -> list[str]:
     return [name for name, pattern in SECRET_PATTERNS.items() if pattern.search(text)]
 
 
+def mask_paths(text: str) -> str:
+    """把本机绝对路径换成 ~ 或占位，避免日志泄露用户名。"""
+    text = str(text)
+    try:
+        text = text.replace(str(Path.home()), "~")
+    except RuntimeError:
+        pass
+    text = re.sub(r"/Users/[^/\s]+", "/Users/<user>", text)
+    text = re.sub(r"/home/[^/\s]+", "/home/<user>", text)
+    text = re.sub(r"[A-Za-z]:\\Users\\[^\\\s]+", r"C:\\Users\\<user>", text)
+    return text
+
+
 def scan_text(text: str) -> list[str]:
     hits = []
     if ID_RE.search(text):
@@ -86,8 +99,6 @@ def scan_repo(root: Path, allow: tuple[str, ...] = ()) -> list[tuple[str, list[s
             continue
         rel = path.relative_to(root).as_posix()
         if any(part in SKIP_DIRS for part in path.parts):
-            continue
-        if rel.startswith(("tests/", "fixtures/")):
             continue
         if any(rel.startswith(a) for a in allow):
             continue

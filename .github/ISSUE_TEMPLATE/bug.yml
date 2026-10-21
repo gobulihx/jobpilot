@@ -16,7 +16,7 @@ body:
     id: doctor
     attributes:
       label: 自检结果
-      description: 贴 `jobpilot doctor --json` 的输出（已脱敏）
+      description: 贴 `jobpilot doctor --json` 的输出，**先删掉 home 字段和路径**
       render: json
   - type: input
     id: python

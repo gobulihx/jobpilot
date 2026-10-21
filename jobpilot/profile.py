@@ -87,6 +87,11 @@ def _as_value(field_path: str, raw):
     return values.coerce(field_path, raw)
 
 
+def prepare_answer(field_path: str, raw):
+    """把用户/助手给的答案转成标准值，供导入前校验。"""
+    return _as_value(field_path, raw)
+
+
 def _seed_values(profile: dict) -> dict:
     v = values.empty()
     person = profile.get("person", {})

@@ -26,8 +26,6 @@ dev = ["ruff>=0.5"]
 packages = ["jobpilot", "jobpilot.backends"]
 include-package-data = true
 
-[project.scripts]
-jobpilot = "jobpilot.cli:main"
 
 [tool.ruff]
 line-length = 100

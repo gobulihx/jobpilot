@@ -1,0 +1,31 @@
+name: 字段别名 / 通用规则
+description: 某个标签认不出来，或者某个通用行为需要修
+body:
+  - type: markdown
+    attributes:
+      value: |
+        公司专属的本地覆盖不用提交（放你自己的 `~/.jobpilot/sites/`）。
+        这里收的是能帮到所有人的字段别名和通用规则。
+  - type: input
+    id: label
+    attributes:
+      label: 页面上的标签
+      description: 不要贴值，只贴标签
+    validations:
+      required: true
+  - type: input
+    id: canonical
+    attributes:
+      label: 应该对应哪个字段
+      description: 比如 education.0.school、person.english_level
+  - type: textarea
+    id: why
+    attributes:
+      label: 为什么现在的匹配不对
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 内容已脱敏，没有账号、密码、真实个人信息
+          required: true

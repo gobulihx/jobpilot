@@ -12,8 +12,8 @@
 | MBOX | `.mbox` / `.mbx` 归档 |
 
 ```bash
-jobpilot inbox --mails mails.json
-jobpilot inbox --mails ./某个目录/      # 里面全是 .eml
+python3 ~/.claude/skills/jobpilot/bin/jobpilot inbox --mails mails.json
+python3 ~/.claude/skills/jobpilot/bin/jobpilot inbox --mails ./某个目录/      # 里面全是 .eml
 ```
 
 ## JSON 字段
@@ -46,7 +46,7 @@ jobpilot inbox --mails ./某个目录/      # 里面全是 .eml
 
 ```bash
 himalaya --json envelope list -m INBOX > mails.json
-jobpilot inbox --mails mails.json
+python3 ~/.claude/skills/jobpilot/bin/jobpilot inbox --mails mails.json
 ```
 
 ### goimapnotify

@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import (
+    __version__,
     doctor,
     export,
     formmodel,
@@ -61,15 +62,35 @@ def cmd_doctor(args) -> int:
 
 
 # --------------------------------------------------------------------------- init
+def _answer_issues(answers: dict) -> list[str]:
+    issues = []
+    for path, raw in answers.items():
+        prepared = profile.prepare_answer(path, raw)
+        msg = values_mod.check_value(path, prepared)
+        if msg:
+            issues.append(msg)
+    return issues
+
+
 def cmd_init(args) -> int:
     if args.questions:
         _print(json.dumps(profile.questions_json(), ensure_ascii=False, indent=2))
         return 0
     if args.demo:
+        if (home.home() / "profile.json").exists() and not args.force:
+            _print("你已经有档案了，演示会覆盖它。想看演示就换个空目录：")
+            _print("  JOBPILOT_HOME=$(mktemp -d) jobpilot demo")
+            return 2
         created = profile.create(demo=True)
         _print("演示档案建好了：示例大学，金融科技，硕士。")
     elif args.answers:
         answers = _load_json_arg(args.answers, {})
+        issues = _answer_issues(answers)
+        if issues:
+            for msg in issues:
+                _print(f"  · {msg}")
+            _print("这几项不太对，改一下再导入。")
+            return 2
         created = profile.create(demo=False, answers=answers)
         _print("档案建好了。")
     else:
@@ -85,6 +106,12 @@ def cmd_init(args) -> int:
         except EOFError:
             _print("\n这里没法一问一答。让助手在对话里问你，"
                    "然后把答案整理成一个文件，用 init --answers 传进来。")
+            return 2
+        issues = _answer_issues(answers)
+        if issues:
+            for msg in issues:
+                _print(f"  · {msg}")
+            _print("这几项不太对，重来一次吧。")
             return 2
         created = profile.create(demo=False, answers=answers)
         _print("\n档案建好了。剩下的字段用到了再问，不会一次让你填一堆。")
@@ -113,7 +140,8 @@ def cmd_values(args) -> int:
         if not missing:
             _print("该有的都有了。")
         for path in missing:
-            _print(f"  · {schema.label_for(path)}（{path}）")
+            suffix = f"（{path}）" if getattr(args, "paths", False) else ""
+            _print(f"  · {values_mod.label_of(vals, path)}{suffix}")
         return 0
     if args.action == "set":
         if not args.path or args.value is None:
@@ -557,12 +585,16 @@ def cmd_cards(args) -> int:
         if issues:
             problems += 1
             _print(f"{name}: {'；'.join(issues)}")
-    _print("全部合格。" if not problems else f"{problems} 张需要改。")
+    _print("全部合格。" if not problems else f"{problems} 张本地覆盖需要改。")
     return 0 if not problems else 1
 
 
 # --------------------------------------------------------------------------- demo
 def cmd_demo(args) -> int:
+    if (home.home() / "profile.json").exists():
+        _print("你已经有档案了，演示会盖掉它。换个空目录再跑：")
+        _print("  JOBPILOT_HOME=$(mktemp -d) jobpilot demo")
+        return 2
     home.ensure_layout()
     profile.create(demo=True, full=True)
     _print("1/5 档案建好了（演示数据）")
@@ -588,7 +620,7 @@ def cmd_demo(args) -> int:
 # --------------------------------------------------------------------------- parser
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="jobpilot", description="求职流水线")
-    p.add_argument("--version", action="version", version="jobpilot 0.1.0")
+    p.add_argument("--version", action="version", version=f"jobpilot {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     d = sub.add_parser("doctor", help="看看现在能做什么")
@@ -600,6 +632,7 @@ def build_parser() -> argparse.ArgumentParser:
     i.add_argument("--demo", action="store_true")
     i.add_argument("--answers", help="（助手用）从 JSON 导入答案")
     i.add_argument("--questions", action="store_true", help="（助手用）输出 12 个问题")
+    i.add_argument("--force", action="store_true", help="演示时覆盖已有档案")
     i.set_defaults(func=cmd_init)
 
     v = sub.add_parser("values", help="看/补字段")
@@ -609,6 +642,7 @@ def build_parser() -> argparse.ArgumentParser:
     v.add_argument("--file")
     v.add_argument("--no-mask", action="store_true")
     v.add_argument("--all", action="store_true", help="连内部偏好一起显示")
+    v.add_argument("--paths", action="store_true", help="显示内部字段路径")
     v.set_defaults(func=cmd_values)
 
     pr = sub.add_parser("probe", help="认页面上的字段")
@@ -620,7 +654,7 @@ def build_parser() -> argparse.ArgumentParser:
     pl = sub.add_parser("plan", help="生成填写计划")
     pl.add_argument("--form", required=True)
     pl.add_argument("--values")
-    pl.add_argument("--card")
+    pl.add_argument("--card", help="本地覆盖的名字（可选）")
     pl.add_argument("--module")
     pl.add_argument("--out")
     pl.add_argument("--no-save", action="store_true", help="不生成保存动作")
@@ -693,7 +727,7 @@ def build_parser() -> argparse.ArgumentParser:
     pv.add_argument("action", choices=["scan"], default="scan", nargs="?")
     pv.set_defaults(func=cmd_privacy)
 
-    cd = sub.add_parser("cards", help="站点卡")
+    cd = sub.add_parser("cards", help="本地覆盖（可选）")
     cd.add_argument("action", choices=["list", "validate"], default="list", nargs="?")
     cd.set_defaults(func=cmd_cards)
 
@@ -716,9 +750,11 @@ def main(argv: list[str] | None = None) -> int:
         try:
             log_dir = home.home() / "logs"
             log_dir.mkdir(parents=True, exist_ok=True)
-            with (log_dir / "error.log").open("a", encoding="utf-8") as fh:
+            log_path = log_dir / "error.log"
+            with log_path.open("a", encoding="utf-8") as fh:
                 fh.write(f"--- {datetime.now().isoformat()} ---\n")
-                fh.write(privacy.mask(traceback.format_exc()) + "\n")
+                fh.write(privacy.mask_paths(privacy.mask(traceback.format_exc())) + "\n")
+            os.chmod(log_path, 0o600)
         except OSError:
             pass
         if os.environ.get("JOBPILOT_DEBUG"):

@@ -1,3 +1,4 @@
+# jobpilot-privacy-allow
 import json
 import tempfile
 import unittest

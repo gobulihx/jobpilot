@@ -20,6 +20,8 @@
 git clone https://github.com/gobulihx/jobpilot ~/.claude/skills/jobpilot
 ```
 
+需要 Python 3.11 及以上（`python3 --version` 看一眼）。目前只支持这样 clone 安装，不通过 pip 发布。
+
 重开 Claude Code，然后说：
 
 > 帮我弄求职助手
@@ -34,7 +36,7 @@ git clone https://github.com/gobulihx/jobpilot ~/.claude/skills/jobpilot
 | 今天有什么能投的 | 找岗、筛岗，给三档结论 |
 | 这个岗位值不值得投 | 逐条对照硬门槛 |
 | 投这个 | 认页面 → 列计划 → 给你看 diff → 你点头才填 |
-| 有回音吗 | 扫邮箱，提议改状态 |
+| 有回音吗 | 读你导出的邮件，提议改状态 |
 | 我还缺什么 | 把没填的列给你 |
 
 命令是助手内部用的，你不用知道。**你负责说话，本鲸负责跑腿。**
@@ -115,7 +117,7 @@ rm -rf ~/.jobpilot
 ## 自己折腾
 
 ```bash
-python3 -m unittest discover -s tests -t .    # 131 个测试：126 单元 + 5 浏览器
+python3 -m unittest discover -s tests -t .    # 136 个测试：131 单元 + 5 浏览器
 python3 -m jobpilot privacy scan              # 仓库 PII 扫描
 ```
 

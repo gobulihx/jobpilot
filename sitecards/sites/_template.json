@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "your-site",
+  "kind": "site",
+  "match": {
+    "url_patterns": ["your-domain.example"],
+    "widgets": [],
+    "hints": ["复制这个文件到 ~/.jobpilot/sites/，改成你的站"]
+  },
+  "fields": {
+    "页面上的标签": "canonical.字段id"
+  },
+  "quirks": {
+    "real_keys": true,
+    "false_save_error": null,
+    "back_blank": false,
+    "readonly_date": false
+  },
+  "save": {"enabled": true, "hints": ["保存"]},
+  "submit": {"enabled": false, "hints": ["提交"]}
+}
