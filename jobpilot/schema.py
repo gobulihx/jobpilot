@@ -32,11 +32,11 @@ class Field:
 # (id, 标签, 类型, 分组, 别名, 敏感, 最大长度, 首建必问)
 _RAW = [
     # 一、身份
-    ("person.name", "姓名", "text", "person", ("中文姓名", "本人姓名"), False, None, True),
+    ("person.name", "姓名", "text", "person", ("中文姓名", "本人姓名"), False, None, False),
     ("person.name_en", "姓名（英文）", "text", "person", ("英文姓名",), False, None, False),
     ("person.gender", "性别", "enum", "person", (), False, None, False),
-    ("person.birth_date", "出生日期", "date", "person", ("出生年月",), False, None, True),
-    ("person.id_no", "身份证号", "text", "person", ("身份证号码", "证件号码"), True, 18, True),
+    ("person.birth_date", "出生日期", "date", "person", ("出生年月",), False, None, False),
+    ("person.id_no", "身份证号", "text", "person", ("身份证号码", "证件号码"), True, 18, False),
     ("person.nation", "民族", "text", "person", (), False, None, False),
     ("person.nationality", "国籍", "text", "person", (), False, None, False),
     ("person.politics", "政治面貌", "enum", "person", (), False, None, False),
@@ -49,9 +49,10 @@ _RAW = [
     ("person.first_job", "是否首次就业", "bool", "person", (), False, None, False),
     ("person.social_insurance", "是否有社保记录", "bool", "person", (), False, None, False),
     ("person.photo", "证件照", "file", "person", ("照片", "免冠照片"), False, None, False),
+    ("person.english_level", "英语水平", "enum", "person", ("英语等级", "外语水平", "英语"), False, None, True),
     # 二、联系方式
-    ("contact.phone", "手机号码", "tel", "contact", ("手机号", "联系电话"), False, None, True),
-    ("contact.email", "电子邮箱", "email", "contact", ("邮箱",), False, None, True),
+    ("contact.phone", "手机号码", "tel", "contact", ("手机号", "联系电话"), False, None, False),
+    ("contact.email", "电子邮箱", "email", "contact", ("邮箱",), False, None, False),
     ("contact.wechat", "微信号", "text", "contact", ("微信",), False, None, False),
     ("contact.address", "通讯地址", "text", "contact", ("家庭地址",), False, None, False),
     ("contact.postcode", "邮编", "text", "contact", ("邮政编码",), False, None, False),
@@ -119,8 +120,11 @@ _RAW = [
     ("intent.city_second", "工作城市次选", "text", "intent", (), False, None, False),
     ("intent.position_first", "工作职位首选", "text", "intent", (), False, None, False),
     ("intent.position_second", "工作职位次选", "text", "intent", (), False, None, False),
-    ("intent.available_from", "可到岗时间", "month", "intent", (), False, None, False),
+    ("intent.available_from", "可到岗时间", "month", "intent", (), False, None, True),
     ("intent.salary_expect", "期望薪资", "text", "intent", (), False, None, False),
+    ("intent.salary_min", "薪资下限", "number", "intent", ("期望薪资下限", "最低薪资", "薪资要求"), False, None, True),
+    ("intent.employer_types", "目标机构类型", "list", "intent", ("意向机构类型", "公司类型"), False, None, True),
+    ("intent.exclude", "排除项", "list", "intent", ("不投清单", "排除公司"), False, None, True),
     ("intent.exam_city", "笔试城市", "text", "intent", (), False, None, False),
     ("intent.referral", "内推方式", "text", "intent", (), False, None, False),
     ("intent.adjust", "是否服从调剂", "bool", "intent", (), False, None, False),
@@ -132,13 +136,13 @@ _RAW = [
     ("narratives.specialty", "特长", "long_text", "narratives", (), False, None, False),
     ("narratives.supplement", "补充说明", "long_text", "narratives", (), False, None, False),
     # 十、声明类
-    ("flags.fresh_grad", "是否应届生", "bool", "flags", (), False, None, False),
+    ("flags.fresh_grad", "是否应届生", "bool", "flags", (), False, None, True),
     ("flags.relative_in_company", "是否有亲属在本公司任职", "bool", "flags", (), False, None, False),
     ("flags.second_major", "是否有第二专业", "bool", "flags", (), False, None, False),
     ("flags.retake", "是否有补考重修", "bool", "flags", (), False, None, False),
     ("flags.scholarship", "是否获得奖学金", "bool", "flags", (), False, None, False),
     # 十一、偏好（不是网申字段）
-    ("prefs.resume", "简历版本", "file", "prefs", (), False, None, True),
+    ("prefs.resume", "简历版本", "file", "prefs", (), False, None, False),
     ("prefs.submit", "提交模式", "enum", "prefs", (), False, None, False),
     ("prefs.photo", "证件照", "file", "prefs", (), False, None, False),
 ]
@@ -151,6 +155,14 @@ FIELDS: dict[str, Field] = {
 
 REPEAT_GROUPS = ("education", "languages", "experiences", "family", "awards")
 L0: tuple[str, ...] = tuple(f.id for f in FIELDS.values() if f.l0)
+# 允许「明确回答为空」的字段（例如：没有要排除的公司）
+ALLOW_EMPTY: frozenset[str] = frozenset({"intent.exclude"})
+
+# 第一次填网申时才问的基础项（首建不问）
+APPLY_BASICS: tuple[str, ...] = (
+    "person.name", "contact.phone", "contact.email",
+    "person.id_no", "person.birth_date", "prefs.resume",
+)
 GROUPS: tuple[str, ...] = tuple(dict.fromkeys(f.group for f in FIELDS.values()))
 
 

@@ -43,6 +43,14 @@ class ScreenTest(unittest.TestCase):
         r = screen.evaluate(c, PROFILE)
         self.assertEqual(r["tier"], "推荐投")
 
+    def test_exclude_list_is_hard_fail(self):
+        c = {"company": "某外包公司", "position": "风控", "degree": "硕士",
+             "major_req": ["金融科技"], "salary_low": 30, "salary_high": 40,
+             "salary_sources": 2}
+        r = screen.evaluate(c, {**PROFILE, "exclude": ["外包"]})
+        self.assertEqual(r["tier"], "不投")
+        self.assertTrue(any("排除" in f for f in r["fails"]))
+
     def test_degree_fail(self):
         c = {"company": "甲", "position": "岗", "degree": "博士", "major_req": ["金融科技"],
              "salary_low": 30, "salary_high": 40, "salary_sources": 2}

@@ -140,6 +140,8 @@ def missing(values: dict, ids: tuple[str, ...] | list[str] | None = None) -> lis
     for path in ids:
         ok, _ = resolve(values, path)
         if not ok:
+            if path in schema.ALLOW_EMPTY and get_entry(values, path) is not None:
+                continue
             out.append(path)
     return out
 
@@ -279,9 +281,8 @@ def validate(values: dict) -> list[str]:
             issues.append(f"{path}: 邮箱格式不对")
         if f.type == "bool" and not isinstance(val, bool) and str(val) not in ("是", "否"):
             issues.append(f"{path}: 应该是 是/否")
-    for path in schema.L0:
-        if not resolve(values, path)[0]:
-            issues.append(f"{path}: 还没填")
+    for path in missing(values):
+        issues.append(f"{path}: 还没填")
     return issues
 
 
@@ -308,6 +309,8 @@ def flat(values: dict, mask: bool = False) -> list[dict]:
         val = get_value(values, path)
         if _is_empty(val):
             continue
+        if isinstance(val, list):
+            val = "、".join(str(x) for x in val)
         if mask and (f and f.sensitive or (isinstance(val, str) and _looks_sensitive(val))):
             val = mask_value(val)
         rows.append({

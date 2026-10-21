@@ -65,7 +65,7 @@ def cmd_init(args) -> int:
         return 0
     if args.demo:
         created = profile.create(demo=True)
-        _print("演示档案建好了：张三，示例大学。")
+        _print("演示档案建好了：示例大学，金融科技，硕士。")
     elif args.answers:
         answers = _load_json_arg(args.answers, {})
         created = profile.create(demo=False, answers=answers)
@@ -93,6 +93,8 @@ def cmd_init(args) -> int:
         _print(humanize.say("missing_value", n=len(missing)))
         for path in missing:
             _print(f"  · {schema.label_for(path)}")
+    else:
+        _print("现在就能问：今天有什么能投的。")
     _print(f"数据放在：{home.home()}")
     return 0
 
@@ -377,8 +379,10 @@ def cmd_screen(args) -> int:
         "grad_date": gv("education.0.grad_date", ""),
         "major": gv("education.0.major", ""),
         "cities": gv("intent.cities", []),
-        "salary_min": args.salary_min,
-        "english": args.english or gv("flags.english", ""),
+        "salary_min": args.salary_min if args.salary_min is not None else gv("intent.salary_min"),
+        "english": args.english or gv("person.english_level", ""),
+        "exclude": gv("intent.exclude", []),
+        "employer_types": gv("intent.employer_types", []),
     }
     results = screen.evaluate_many(candidates, profile_doc)
     if args.json:
@@ -508,7 +512,7 @@ def cmd_cards(args) -> int:
 # --------------------------------------------------------------------------- demo
 def cmd_demo(args) -> int:
     home.ensure_layout()
-    profile.create(demo=True)
+    profile.create(demo=True, full=True)
     _print("1/5 档案建好了（演示数据）")
     fixture = ROOT_DIR / "tests" / "fixtures" / "element-ui.form.json"
     form = formmodel.normalize(json.loads(fixture.read_text(encoding="utf-8")))

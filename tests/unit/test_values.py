@@ -18,8 +18,8 @@ class ValuesTest(unittest.TestCase):
         self.assertEqual(values.get_value(self.v, "person.height"), "180")
 
     def test_missing_when_empty(self):
-        values.delete_path(self.v, "contact.email")
-        self.assertIn("contact.email", values.missing(self.v))
+        values.delete_path(self.v, "intent.salary_min")
+        self.assertIn("intent.salary_min", values.missing(self.v))
 
     def test_max_length(self):
         values.set_value(self.v, "education.0.school", "这是一个特别特别特别特别特别长的学校名称用来测试超长校验")

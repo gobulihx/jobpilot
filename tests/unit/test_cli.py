@@ -7,9 +7,14 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
+from jobpilot import values as values_mod
 from jobpilot.cli import main
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def values_missing(doc):
+    return values_mod.missing(doc)
 
 
 class CliTest(unittest.TestCase):
@@ -47,20 +52,27 @@ class CliTest(unittest.TestCase):
 
     def test_init_answers(self):
         answers = {
-            "person.name": "李四", "contact.phone": "13900000000",
-            "contact.email": "lisi@example.com", "person.id_no": "110101199801011234",
-            "person.birth_date": "1998-01-01", "education.0.school": "示例学院",
-            "education.0.major": "统计", "education.0.level": "硕士",
-            "education.0.grad_date": "2027-06", "intent.directions": "风险,数据",
-            "intent.cities": "北京,上海", "prefs.resume": "材料/简历.pdf",
+            "education.0.level": "硕士", "education.0.school": "示例学院",
+            "education.0.major": "统计", "education.0.grad_date": "2027-06",
+            "intent.directions": "风险,数据", "intent.cities": "北京,上海",
+            "intent.salary_min": "20", "person.english_level": "CET6",
+            "flags.fresh_grad": "是", "intent.employer_types": "银行,券商",
+            "intent.exclude": "", "intent.available_from": "2027-07",
         }
         path = Path(self.home) / "answers.json"
         path.write_text(json.dumps(answers), encoding="utf-8")
         code, out = self.run_cli("init", "--answers", str(path))
         self.assertEqual(code, 0)
         data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
-        self.assertEqual(data["person"]["name"]["v"], "李四")
+        self.assertEqual(data["education"][0]["level"]["v"], "硕士")
         self.assertEqual(data["intent"]["directions"]["v"], ["风险", "数据"])
+        self.assertEqual(data["intent"]["salary_min"]["v"], "20")
+        self.assertEqual(data["person"]["english_level"]["v"], "CET6")
+        self.assertIs(data["flags"]["fresh_grad"]["v"], True)
+        # 首建不问身份信息，等填网申再问
+        self.assertNotIn("name", data["person"])
+        self.assertNotIn("phone", data.get("contact", {}))
+        self.assertEqual(values_missing(data), [])
 
     def test_demo_end_to_end(self):
         code, out = self.run_cli("demo")
@@ -69,7 +81,7 @@ class CliTest(unittest.TestCase):
         self.assertTrue((Path(self.home) / "exports" / "填写稿.md").exists())
 
     def test_plan_review_sheet(self):
-        self.run_cli("init", "--demo")
+        self.run_cli("demo")
         plan_path = Path(self.home) / "plan.json"
         code, out = self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
                                  "--out", str(plan_path))
@@ -85,7 +97,7 @@ class CliTest(unittest.TestCase):
         self.assertIn("姓名", (Path(self.home) / "s.md").read_text(encoding="utf-8"))
 
     def test_run_fake(self):
-        self.run_cli("init", "--demo")
+        self.run_cli("demo")
         plan_path = Path(self.home) / "plan.json"
         self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
                      "--out", str(plan_path))

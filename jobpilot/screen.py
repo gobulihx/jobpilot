@@ -14,6 +14,14 @@ def _norm_degree(text: str) -> str:
     return "不限"
 
 
+def _fmt(value) -> str:
+    try:
+        number = float(value)
+        return str(int(number)) if number.is_integer() else str(number)
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def _num(value) -> float | None:
     try:
         return float(value)
@@ -62,11 +70,11 @@ def evaluate(candidate: dict, profile: dict) -> dict:
     want = _num(profile.get("salary_min"))
     if salary_high is not None and want is not None:
         if salary_high < want:
-            fails.append(f"薪资上限 {salary_high} 低于你的下限 {want}")
+            fails.append(f"薪资上限 {_fmt(salary_high)} 低于你的下限 {_fmt(want)}")
         elif salary_low is not None and salary_low >= want:
-            reasons.append(f"薪资 {salary_low}–{salary_high}，够线")
+            reasons.append(f"薪资 {_fmt(salary_low)}–{_fmt(salary_high)}，够线")
         else:
-            reasons.append(f"薪资 {salary_low}–{salary_high}，下限偏低")
+            reasons.append(f"薪资 {_fmt(salary_low)}–{_fmt(salary_high)}，下限偏低")
     elif want is not None:
         unknown.append("薪资")
 
@@ -102,6 +110,18 @@ def evaluate(candidate: dict, profile: dict) -> dict:
                 break
         if not major_ok:
             reasons.append(f"专业要求 {('、'.join(major))}，你的是 {my_major}（自行判断）")
+
+    exclude = [str(x) for x in (profile.get("exclude") or []) if str(x).strip()]
+    haystack = f"{candidate.get('company', '')}{candidate.get('position', '')}{city}"
+    for term in exclude:
+        if term in haystack:
+            fails.append(f"在你排除的清单里：{term}")
+            break
+
+    types = [str(x) for x in (profile.get("employer_types") or []) if str(x).strip()]
+    category = str(candidate.get("category", "") or "")
+    if types and category and not any(t in category for t in types):
+        reasons.append(f"机构类型 {category} 不在你的偏好里（不是硬伤）")
 
     sources = candidate.get("salary_sources")
     if salary_low is not None and (sources is None or sources < 2):
