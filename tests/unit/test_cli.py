@@ -124,6 +124,25 @@ class CliTest(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("数字", out)
 
+    def test_fields_add_and_map(self):
+        self.run_cli("init", "--demo")
+        code, out = self.run_cli("fields", "add", "--label", "GRE", "--value", "320",
+                                 "--aliases", "GRE成绩")
+        self.assertEqual(code, 0)
+        data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["custom_fields"]["gre"]["label"], "GRE")
+        self.assertEqual(data["custom"]["gre"]["v"], "320")
+
+        code, out = self.run_cli("fields", "map", "--label", "最高学历学校",
+                                 "--path", "education.0.school")
+        self.assertEqual(code, 0)
+        data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["aliases"]["最高学历学校"], "education.0.school")
+
+        code, out = self.run_cli("fields", "list")
+        self.assertIn("GRE", out)
+        self.assertIn("最高学历学校", out)
+
     def test_values_skip(self):
         self.run_cli("init", "--demo")
         code, out = self.run_cli("values", "skip", "narratives.hobby")

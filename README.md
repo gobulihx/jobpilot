@@ -8,6 +8,7 @@
 - 网申先探测、再生成计划、**提交前给你看一份 diff**
 - 默认 **不提交**，你说投才投
 - 选填项不会静默跳过，列出来让你决定
+- 字段表不够用？现场加（GRE、证书这类），不用改代码
 - 没有浏览器也能用：生成逐字段**填写稿**，复制粘贴
 - 投递台账幂等，重复记录不会翻倍
 
@@ -138,7 +139,7 @@ CLI 本身不联网搜索，也不检测你装了哪个搜索工具。
 ## 开发
 
 ```bash
-python3 -m unittest discover -s tests -t .    # 94 个测试：89 单元 + 5 浏览器
+python3 -m unittest discover -s tests -t .    # 100 个测试：95 单元 + 5 浏览器
 python3 -m jobpilot privacy scan              # 仓库 PII 扫描
 ```
 

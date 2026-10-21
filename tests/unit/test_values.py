@@ -40,6 +40,19 @@ class ValuesTest(unittest.TestCase):
         self.assertIsNone(values.check_value("intent.adjust", "是"))
         self.assertIsNotNone(values.check_value("intent.adjust", "也许"))
 
+    def test_custom_field(self):
+        path = values.add_custom(self.v, "GRE", value="320", aliases=["GRE成绩"])
+        self.assertEqual(path, "custom.gre")
+        self.assertEqual(values.get_value(self.v, path), "320")
+        self.assertEqual(values.label_of(self.v, path), "GRE")
+        self.assertEqual(values.custom_alias_index(self.v)["GRE成绩"], ("custom.gre",))
+        self.assertIsNone(values.check_value(path, "325", self.v))
+
+    def test_custom_field_type_check(self):
+        path = values.add_custom(self.v, "托福", value="105", type_="number")
+        self.assertIsNone(values.check_value(path, "110", self.v))
+        self.assertIsNotNone(values.check_value(path, "很高", self.v))
+
     def test_skip_memory(self):
         values.skip(self.v, "narratives.hobby")
         self.assertIn("narratives.hobby", values.skipped(self.v))

@@ -123,6 +123,33 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(act["op"], "select")
         self.assertEqual(act["value"], "是")
 
+    def test_custom_field_matches(self):
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        values.add_custom(vals, "GRE", value="320", aliases=["GRE成绩"])
+        raw = {"url": "x", "module": "基本信息",
+               "controls": [{"label": "GRE成绩", "kind": "text", "required": True}]}
+        p = build(vals=vals, form=raw)
+        self.assertEqual(p["blocking"], [])
+        act = p["steps"][0]["actions"][0]
+        self.assertEqual(act["value_ref"], "custom.gre")
+        self.assertEqual(act["value"], "320")
+
+    def test_alias_maps_existing_field(self):
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        values.add_alias(vals, "最高学历学校", "education.0.school")
+        raw = {"url": "x", "module": "教育经历",
+               "controls": [{"label": "最高学历学校", "kind": "text", "required": True}]}
+        p = build(vals=vals, form=raw)
+        act = p["steps"][0]["actions"][0]
+        self.assertEqual(act["value_ref"], "education.0.school")
+
+    def test_unknown_required_blocks(self):
+        raw = {"url": "x", "module": "基本信息",
+               "controls": [{"label": "火星文必填栏", "kind": "text", "required": True}]}
+        p = build(form=raw)
+        self.assertEqual(len(p["blocking"]), 1)
+        self.assertIsNone(p["blocking"][0]["path"])
+
     def test_explain_is_readable(self):
         lines = plan.explain(build())
         self.assertTrue(any("最高学历" in line for line in lines))

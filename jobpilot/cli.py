@@ -120,7 +120,7 @@ def cmd_values(args) -> int:
             return 2
         values_mod.set_value(vals, args.path, args.value)
         home.write_json(_values_path(), vals)
-        _print(f"记下了：{schema.label_for(args.path)}")
+        _print(f"记下了：{values_mod.label_of(vals, args.path)}")
         return 0
     if args.action in ("skip", "unskip"):
         if not args.path:
@@ -129,14 +129,14 @@ def cmd_values(args) -> int:
         values_mod.skip(vals, args.path, on=args.action == "skip")
         home.write_json(_values_path(), vals)
         verb = "以后不再问" if args.action == "skip" else "重新算进待填"
-        _print(f"记下了：{schema.label_for(args.path)} {verb}。")
+        _print(f"记下了：{values_mod.label_of(vals, args.path)} {verb}。")
         return 0
     if args.action == "set-many":
         if not args.file:
             _print("给一个答案文件（--file answers.json）")
             return 2
         data = _load_json_arg(args.file, {})
-        issues = [(path, values_mod.check_value(path, raw)) for path, raw in data.items()]
+        issues = [(path, values_mod.check_value(path, raw, vals)) for path, raw in data.items()]
         issues = [(path, msg) for path, msg in issues if msg]
         if issues:
             for path, msg in issues:
@@ -423,6 +423,58 @@ def cmd_inbox(args) -> int:
         db.close()
 
 
+# --------------------------------------------------------------------------- fields
+def cmd_fields(args) -> int:
+    vals = home.read_json(_values_path(), values_mod.empty()) or values_mod.empty()
+    if args.action == "add":
+        if not args.label:
+            _print("要加什么字段？给个名字（--label）。")
+            return 2
+        aliases = [x.strip() for x in (args.aliases or "").replace("，", ",").split(",") if x.strip()]
+        path = values_mod.add_custom(vals, args.label, value=args.value,
+                                     type_=args.type or "text", aliases=aliases, slug=args.id)
+        home.write_json(_values_path(), vals)
+        _print(f"记下了：{args.label}。以后再遇到这个标签，人家会认。")
+        return 0
+    if args.action == "map":
+        if not args.label or not args.path:
+            _print("要映射哪个标签、对应哪个字段？")
+            return 2
+        known = schema.field_for(args.path) or args.path.startswith("custom.")
+        if not known:
+            _print(f"{args.path} 不是一个已知字段。要新加字段，用 fields add。")
+            return 2
+        values_mod.add_alias(vals, args.label, args.path)
+        home.write_json(_values_path(), vals)
+        _print(f"记下了：「{args.label}」就是 {values_mod.label_of(vals, args.path)}。")
+        return 0
+    if args.action == "list":
+        custom = values_mod.custom_fields(vals)
+        aliases = vals.get("aliases", {}) or {}
+        if not custom and not aliases:
+            _print("还没有自定义字段。")
+            return 0
+        for slug, meta in custom.items():
+            extra = f"（别名：{'、'.join(meta.get('aliases', []))}）" if meta.get("aliases") else ""
+            _print(f"custom.{slug}：{meta.get('label')}{extra}")
+        for label, path in aliases.items():
+            _print(f"别名：「{label}」→ {values_mod.label_of(vals, path)}")
+        return 0
+    if args.action == "remove":
+        if not args.id:
+            _print("要删哪个字段？给个 id。")
+            return 2
+        vals.get("custom_fields", {}).pop(args.id, None)
+        vals.get("custom", {}).pop(args.id, None)
+        vals["aliases"] = {k: v for k, v in (vals.get("aliases", {}) or {}).items()
+                           if not v.startswith(f"custom.{args.id}")}
+        home.write_json(_values_path(), vals)
+        _print("删掉了。")
+        return 0
+    _print("支持 add / map / list / remove")
+    return 2
+
+
 # --------------------------------------------------------------------------- privacy / cards
 def cmd_privacy(args) -> int:
     hits = privacy.scan_repo(ROOT_DIR)
@@ -562,6 +614,16 @@ def build_parser() -> argparse.ArgumentParser:
     ib.add_argument("--mails", required=True)
     ib.add_argument("--apply", action="store_true")
     ib.set_defaults(func=cmd_inbox)
+
+    fd = sub.add_parser("fields", help="字段表里没有的字段")
+    fd.add_argument("action", choices=["add", "map", "list", "remove"])
+    fd.add_argument("--label")
+    fd.add_argument("--value")
+    fd.add_argument("--type")
+    fd.add_argument("--aliases")
+    fd.add_argument("--id")
+    fd.add_argument("--path")
+    fd.set_defaults(func=cmd_fields)
 
     pv = sub.add_parser("privacy", help="扫描仓库")
     pv.add_argument("action", choices=["scan"], default="scan", nargs="?")

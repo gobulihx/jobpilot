@@ -122,7 +122,8 @@ def _build_action(control: dict, path: str, value, entry, card: dict):
 
 def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                  run_id: str | None = None, save: bool = False) -> dict:
-    alias_index = schema.alias_index()
+    alias_index = dict(schema.alias_index())
+    alias_index.update(values_mod.custom_alias_index(vals))
     skipped = values_mod.skipped(vals)
     steps = []
     unmapped: list[dict] = []

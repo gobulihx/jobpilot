@@ -20,7 +20,7 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 def empty() -> dict:
     return {"person": {}, "contact": {}, "education": [], "languages": [], "experiences": [],
             "family": [], "awards": [], "intent": {}, "narratives": {}, "flags": {},
-            "prefs": {}, "skipped": []}
+            "prefs": {}, "skipped": [], "custom": {}, "custom_fields": {}, "aliases": {}}
 
 
 def _parts(path: str) -> list[str]:
@@ -144,6 +144,65 @@ def missing(values: dict, ids: tuple[str, ...] | list[str] | None = None) -> lis
     return out
 
 
+def custom_fields(values: dict) -> dict:
+    """用户现场加的字段：{slug: {label, type, aliases}}。"""
+    return dict(values.get("custom_fields", {}) or {})
+
+
+def add_custom(values: dict, label: str, value=None, type_: str = "text",
+               aliases: list[str] | None = None, slug: str | None = None) -> str:
+    import hashlib
+    import re as _re
+
+    label = str(label).strip()
+    if not slug:
+        ascii_slug = _re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_")
+        slug = ascii_slug or "f" + hashlib.sha1(label.encode()).hexdigest()[:6]
+    meta = values.setdefault("custom_fields", {})
+    item = {"label": label, "type": type_, "aliases": list(aliases or [])}
+    meta[slug] = item
+    path = f"custom.{slug}"
+    if value is not None and value != "":
+        set_value(values, path, value, type_=type_)
+    return path
+
+
+def add_alias(values: dict, label: str, path: str) -> None:
+    values.setdefault("aliases", {})[str(label).strip()] = path
+
+
+def custom_alias_index(values: dict) -> dict[str, tuple[str, ...]]:
+    """自定义字段与手动别名的索引，和 schema.alias_index() 合并使用。"""
+    from . import schema
+
+    idx: dict[str, list[str]] = {}
+    for slug, meta in custom_fields(values).items():
+        path = f"custom.{slug}"
+        for name in [meta.get("label", "")] + list(meta.get("aliases", [])):
+            key = schema.normalize_label(name)
+            if key:
+                idx.setdefault(key, []).append(path)
+    for name, path in (values.get("aliases", {}) or {}).items():
+        key = schema.normalize_label(name)
+        if key:
+            idx.setdefault(key, []).append(path)
+    return {k: tuple(dict.fromkeys(v)) for k, v in idx.items()}
+
+
+def label_of(values: dict, path: str) -> str:
+    from . import schema
+
+    f = schema.field_for(path)
+    if f:
+        return f.label
+    if path.startswith("custom."):
+        slug = path.split(".", 1)[1]
+        meta = custom_fields(values).get(slug)
+        if meta:
+            return meta.get("label", slug)
+    return path.split(".")[-1]
+
+
 def skipped(values: dict) -> set[str]:
     return set(values.get("skipped", []) or [])
 
@@ -157,11 +216,21 @@ def skip(values: dict, path: str, on: bool = True) -> None:
     values["skipped"] = sorted(current)
 
 
-def check_value(path: str, raw) -> str | None:
+def check_value(path: str, raw, values: dict | None = None) -> str | None:
     """检查单个值能不能写；返回一句问题，没问题返回 None。"""
     f = schema.field_for(path)
     if f is None:
-        return f"{path}: 不认识这个字段"
+        if not path.startswith("custom."):
+            return f"{path}: 不认识这个字段"
+        slug = path.split(".", 1)[1]
+        meta = custom_fields(values or {}).get(slug, {})
+        label = meta.get("label", slug)
+        if meta.get("type") == "number":
+            try:
+                float(raw)
+            except (TypeError, ValueError):
+                return f"{label}: 要填数字"
+        return None
     if raw is None or raw == "":
         return None
     if f.type == "number":
@@ -243,7 +312,7 @@ def flat(values: dict, mask: bool = False) -> list[dict]:
             val = mask_value(val)
         rows.append({
             "path": path,
-            "label": f.label if f else path,
+            "label": f.label if f else label_of(values, path),
             "value": val,
             "sensitive": bool(f and f.sensitive),
         })
