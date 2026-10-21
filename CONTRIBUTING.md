@@ -20,8 +20,6 @@
    python3 -m jobpilot privacy scan
    ```
 
-本地覆盖的写法见 `references/local-overrides.md`。
-
 ## 提交前检查
 
 - [ ] 没有真实个人信息（身份证、手机、邮箱、公司账号）
