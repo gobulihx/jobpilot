@@ -421,14 +421,20 @@ def cmd_screen(args) -> int:
 
 # --------------------------------------------------------------------------- inbox
 def cmd_inbox(args) -> int:
-    mails = _load_json_arg(args.mails, [])
+    from . import mailbox as mailbox_mod
+    try:
+        mails = mailbox_mod.load(args.mails)
+    except (FileNotFoundError, ValueError, OSError):
+        _print("没读到邮件。给 JSON、EML、MBOX，或者一个装着 .eml 的目录。")
+        return 2
     if not mails:
-        _print("给一份邮件清单（--mails）。")
+        _print("这个文件里没读到邮件。")
         return 2
     db = ledger.Ledger(home.ensure_layout() / "ledger.db")
     try:
         apps = db.list()
         proposals = inbox.propose(mails, apps)
+        _print(f"读了 {len(mails)} 封，{len(proposals)} 封像回执。")
         if not proposals:
             _print("这批邮件里没有能对上的回执。")
             return 0

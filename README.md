@@ -72,6 +72,18 @@ python3 -m playwright install chromium
 没有也能干，就是范围小一点、慢一点：先看你给的链接，再翻官网，再看只读的招聘平台。
 细节在 [search.md](references/search.md)。
 
+## 邮箱回执？本鲸不接邮箱
+
+不连 IMAP、不存密码、不要授权码。你用现成工具收信，导成本地文件给本鲸：
+
+- **himalaya**：命令行收信，原生 JSON 输出
+- **goimapnotify**：新邮件到达时触发脚本
+- **imap-tools**：想自己写 Python 小脚本
+- **imapfilter**：想用规则筛信、转发
+
+也支持 `.eml`、`.mbox`、或一个装着 `.eml` 的目录。细节和示例：
+[references/email.md](references/email.md)
+
 ## 数据在哪
 
 只在本机 `~/.jobpilot/`：目录 700，值文件 600，日志脱敏，截图不往上传。
@@ -103,7 +115,7 @@ rm -rf ~/.jobpilot
 ## 自己折腾
 
 ```bash
-python3 -m unittest discover -s tests -t .    # 123 个测试：118 单元 + 5 浏览器
+python3 -m unittest discover -s tests -t .    # 129 个测试：124 单元 + 5 浏览器
 python3 -m jobpilot privacy scan              # 仓库 PII 扫描
 ```
 

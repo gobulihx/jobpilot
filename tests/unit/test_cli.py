@@ -182,6 +182,13 @@ class CliTest(unittest.TestCase):
         data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
         self.assertIn("narratives.hobby", data["skipped"])
 
+    def test_inbox_eml(self):
+        self.run_cli("ledger", "add", "--company", "示例银行", "--position", "风险岗")
+        code, out = self.run_cli("inbox", "--mails", str(ROOT / "tests/fixtures/mail.eml"))
+        self.assertEqual(code, 0)
+        self.assertIn("读了 1 封", out)
+        self.assertIn("示例银行", out)
+
     def test_ledger_check(self):
         self.run_cli("ledger", "add", "--company", "示例银行", "--position", "风险岗")
         code, out = self.run_cli("ledger", "check", "--company", "示例银行",

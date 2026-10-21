@@ -246,8 +246,9 @@ python3 "$SKILL_DIR/bin/jobpilot" ledger export
 
 ### 五、回执
 
-只读邮件，关键词分类，**提议**状态变更，不自动改。邮件先用邮箱工具取回来，
-整理成 `msgid / from / subject / snippet` 四个字段，再喂给 inbox：
+只读**本地邮件文件**，关键词分类，**提议**状态变更，不自动改。
+**不接邮箱、不存密码、不要授权码。** 让用户用现成工具导出 JSON / EML / MBOX
+（himalaya、goimapnotify、imap-tools 等，见 `references/email.md`），再喂给 inbox：
 
 ```bash
 python3 "$SKILL_DIR/bin/jobpilot" inbox --mails 邮件.json

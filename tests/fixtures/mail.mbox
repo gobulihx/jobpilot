@@ -1,0 +1,17 @@
+From hr@example-bank.com Tue Oct 20 10:00:00 2026
+From: hr@example-bank.com
+Subject: 示例银行笔试通知
+Message-ID: <m1@example-bank.com>
+Date: Tue, 20 Oct 2026 10:00:00 +0800
+Content-Type: text/plain; charset=utf-8
+
+请于 10 月 25 日参加在线笔试。
+
+From campus@example-sec.com Wed Oct 21 09:00:00 2026
+From: campus@example-sec.com
+Subject: 面试邀请
+Message-ID: <m2@example-sec.com>
+Date: Wed, 21 Oct 2026 09:00:00 +0800
+Content-Type: text/plain; charset=utf-8
+
+邀请您参加初面。
