@@ -1,0 +1,11 @@
+[
+  {"company": "示例银行", "position": "总行风险岗", "city": "杭州", "degree": "硕士",
+   "grad_window": "2026-09-01至2027-08-31", "salary_low": 25, "salary_high": 30,
+   "salary_sources": 2, "major_req": ["金融科技", "金融"], "english": "CET6"},
+  {"company": "示例券商", "position": "风险管理", "city": "上海", "degree": "博士",
+   "grad_window": "2026-09-01至2027-08-31", "salary_low": 30, "salary_high": 40,
+   "salary_sources": 2, "major_req": ["金融工程"]},
+  {"company": "示例消金", "position": "风控策略", "city": "深圳", "degree": "硕士",
+   "grad_window": "2026-09-01至2027-08-31", "salary_low": 18, "salary_high": 22,
+   "major_req": ["统计"], "english": "CET6"}
+]

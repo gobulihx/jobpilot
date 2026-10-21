@@ -1,0 +1,31 @@
+name: 问题反馈
+description: 填错了、跑不通、页面认不出来
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请不要贴完整计划、值文件、截图里的身份证或手机号。
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么
+      description: 你在哪一步、期望什么、实际什么
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: 自检结果
+      description: 贴 `jobpilot doctor --json` 的输出（已脱敏）
+      render: json
+  - type: input
+    id: python
+    attributes:
+      label: Python 版本
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我确认内容里没有真实个人信息
+          required: true

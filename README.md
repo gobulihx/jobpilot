@@ -1,0 +1,116 @@
+# jobpilot
+
+> 把求职从「每次重新填一遍」变成「一次建档，每岗三分钟」。
+
+一个给中文求职者用的 Claude Code 技能。本地运行，数据不出本机。
+
+- 第一次只问 **12 个字段**，其余用到再补
+- 网申先探测、再生成计划、**提交前给你看一份 diff**
+- 默认 **不提交**，你说投才投
+- 没有浏览器也能用：生成逐字段**填写稿**，复制粘贴
+- 投递台账幂等，重复记录不会翻倍
+
+## 30 秒安装
+
+```bash
+git clone https://github.com/gobulihx/jobpilot ~/.claude/skills/jobpilot
+```
+
+重开 Claude Code，然后说一句：
+
+> 帮我弄求职助手
+
+## 5 分钟首跑
+
+```bash
+cd ~/.claude/skills/jobpilot
+./bin/jobpilot doctor      # 看看现在能做什么
+./bin/jobpilot init        # 4 轮，每轮 3 个问题
+# 或者在 Claude Code 里让它问，再执行：
+# ./bin/jobpilot init --questions
+# ./bin/jobpilot init --answers answers.json
+./bin/jobpilot demo        # 用演示数据跑一遍完整流程
+```
+
+`demo` 会生成一份填写稿、写两条台账、再证明重复写入不会翻倍。
+
+## 它怎么工作
+
+```
+探页面  →  认字段  →  编计划  →  人审  →  执行  →  回读  →  记账
+probe     match      plan      review   run     verify   ledger
+```
+
+**模型不往页面里手打值。** 页面上有什么、该填哪个字段、填什么，都是确定性代码算出来的；
+模型只裁决「这个标签到底对应哪个字段」和「低置信项要不要问用户」。
+
+每个写入动作都带一个来源路径，比如 `education.0.school`。
+值文件里找不到来源，就不生成动作。
+
+## 能力与降级
+
+| 能力 | 有 | 没有 |
+|---|---|---|
+| 浏览器（Playwright） | 自动填表 + 回读核对 | 生成填写稿 |
+| 搜索（exa / DeepSeek Web） | 找公告、读原文 | 只读你给的链接 |
+| 邮箱 | 扫回执、提议改状态 | 每周手动导出一次 |
+| openpyxl | 导出 xlsx | 导出 csv |
+
+```bash
+# 想自动填表，再装两步（可选）
+python3 -m pip install playwright
+python3 -m playwright install chromium
+```
+
+或者用已经开着的 Chrome：
+
+```bash
+open -na "Google Chrome" --args --remote-debugging-port=9222
+```
+
+## 隐私
+
+- 数据只在本机 `~/.jobpilot/`，目录 700、值文件 600
+- 仓库里没有任何个人信息；CI 会扫描身份证、手机号、邮箱
+- 日志脱敏，截图只落本地
+- 没有遥测，不上传任何东西
+
+详见 [PRIVACY.md](PRIVACY.md)。
+
+## 它不做什么
+
+- 不代注册、不代过验证码、不代实人认证
+- 不代聊（BOSS / 智联只读浏览）
+- 不默认提交：`dry_run` → `confirm` → `auto`（按站点白名单）
+- 不编造经历：缺值留空，提交前列出来
+
+## 已知限制
+
+- 站点按 **ATS 归类**（Element UI、智联、企业自建），不是每个站都开箱即用；认不出的站会生成填写稿。
+- 页面改版会让旧计划失效，需要重新探测。
+- 只覆盖中国大陆校招站；国际 ATS 未实现。
+- 真站 smoke 测试只能手动跑，CI 只跑本地页面。
+- `commitOthers` 之类的假保存错误靠站点卡声明，没声明的站会按普通错误处理。
+
+## 贡献
+
+最需要的是**站点卡**：一张卡 + 一个脱敏页面夹具，就能让后面的人少踩一次坑。
+规范见 [references/site-card-spec.md](references/site-card-spec.md) 和 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 开发
+
+```bash
+python3 -m unittest discover -s tests -t .    # 84 个测试：79 单元 + 5 浏览器
+python3 -m jobpilot privacy scan              # 仓库 PII 扫描
+```
+
+需要浏览器时：
+
+```bash
+python3 -m pip install playwright && python3 -m playwright install chromium
+python3 -m unittest tests.e2e.test_fill -v
+```
+
+## 许可证
+
+MIT

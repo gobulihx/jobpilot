@@ -1,0 +1,115 @@
+import io
+import json
+import os
+import stat
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
+
+from jobpilot.cli import main
+
+ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+class CliTest(unittest.TestCase):
+    def setUp(self):
+        self.home = tempfile.mkdtemp()
+        os.environ["JOBPILOT_HOME"] = self.home
+
+    def run_cli(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = main(list(argv))
+        return code, buf.getvalue()
+
+    def test_doctor_json(self):
+        code, out = self.run_cli("doctor", "--json")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        self.assertIn("python", data)
+        self.assertTrue(data["home_writable"])
+
+    def test_init_demo_writes_600(self):
+        code, out = self.run_cli("init", "--demo")
+        self.assertEqual(code, 0)
+        values = Path(self.home) / "values.json"
+        self.assertTrue(values.exists())
+        mode = stat.S_IMODE(values.stat().st_mode)
+        self.assertEqual(mode, 0o600)
+
+    def test_init_questions(self):
+        code, out = self.run_cli("init", "--questions")
+        self.assertEqual(code, 0)
+        rounds = json.loads(out)
+        self.assertEqual(len(rounds), 4)
+        self.assertEqual(sum(len(r) for r in rounds), 12)
+
+    def test_init_answers(self):
+        answers = {
+            "person.name": "李四", "contact.phone": "13900000000",
+            "contact.email": "lisi@example.com", "person.id_no": "110101199801011234",
+            "person.birth_date": "1998-01-01", "education.0.school": "示例学院",
+            "education.0.major": "统计", "education.0.level": "硕士",
+            "education.0.grad_date": "2027-06", "intent.directions": "风险,数据",
+            "intent.cities": "北京,上海", "prefs.resume": "材料/简历.pdf",
+        }
+        path = Path(self.home) / "answers.json"
+        path.write_text(json.dumps(answers), encoding="utf-8")
+        code, out = self.run_cli("init", "--answers", str(path))
+        self.assertEqual(code, 0)
+        data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["person"]["name"]["v"], "李四")
+        self.assertEqual(data["intent"]["directions"]["v"], ["风险", "数据"])
+
+    def test_demo_end_to_end(self):
+        code, out = self.run_cli("demo")
+        self.assertEqual(code, 0)
+        self.assertIn("演示完成", out)
+        self.assertTrue((Path(self.home) / "exports" / "填写稿.md").exists())
+
+    def test_plan_review_sheet(self):
+        self.run_cli("init", "--demo")
+        plan_path = Path(self.home) / "plan.json"
+        code, out = self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
+                                 "--card", "element-ui", "--out", str(plan_path))
+        self.assertEqual(code, 0)
+        self.assertTrue(plan_path.exists())
+
+        code, out = self.run_cli("review", str(plan_path))
+        self.assertEqual(code, 0)
+        self.assertIn("停在提交前", out)
+
+        code, out = self.run_cli("sheet", str(plan_path), "--out", str(Path(self.home) / "s.md"))
+        self.assertEqual(code, 0)
+        self.assertIn("姓名", (Path(self.home) / "s.md").read_text(encoding="utf-8"))
+
+    def test_run_fake(self):
+        self.run_cli("init", "--demo")
+        plan_path = Path(self.home) / "plan.json"
+        self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
+                     "--card", "element-ui", "--out", str(plan_path))
+        code, out = self.run_cli("run", str(plan_path), "--backend", "fake")
+        self.assertEqual(code, 0)
+        self.assertIn("停在提交前", out)
+
+    def test_ledger_and_export(self):
+        self.assertEqual(self.run_cli("ledger", "add", "--company", "甲", "--position", "岗")[0], 0)
+        self.assertEqual(self.run_cli("ledger", "add", "--company", "甲", "--position", "岗")[0], 0)
+        code, out = self.run_cli("ledger", "list")
+        self.assertEqual(code, 0)
+        code, out = self.run_cli("ledger", "export")
+        self.assertEqual(code, 0)
+        self.assertTrue((Path(self.home) / "exports" / "投递记录.csv").exists())
+
+    def test_privacy_clean(self):
+        code, out = self.run_cli("privacy", "scan")
+        self.assertEqual(code, 0, out)
+
+    def test_cards_validate(self):
+        code, out = self.run_cli("cards", "validate")
+        self.assertEqual(code, 0, out)
+
+
+if __name__ == "__main__":
+    unittest.main()

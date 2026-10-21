@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "zhaopin",
+  "kind": "ats",
+  "match": {
+    "url_patterns": ["zhaopin.com", "xiaoyuan.zhaopin.com"],
+    "widgets": [],
+    "hints": ["智联招聘网申"]
+  },
+  "fields": {},
+  "quirks": {
+    "real_keys": true,
+    "false_save_error": null,
+    "back_blank": false,
+    "readonly_date": true
+  },
+  "save": {"enabled": true, "hints": ["保存", "保存并继续"]},
+  "submit": {"enabled": true, "hints": ["立即投递", "提交"]}
+}

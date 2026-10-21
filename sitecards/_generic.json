@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "_generic",
+  "kind": "generic",
+  "match": {"url_patterns": [], "widgets": []},
+  "fields": {},
+  "quirks": {"real_keys": true, "false_save_error": null, "back_blank": false, "readonly_date": false},
+  "save": {"enabled": true, "hints": ["保存", "保存草稿", "暂存"]},
+  "submit": {"enabled": false, "hints": ["提交", "投递"]}
+}

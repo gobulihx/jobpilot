@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "element-ui",
+  "kind": "ats",
+  "match": {
+    "url_patterns": [],
+    "widgets": ["el-form", "el-select", "el-input"],
+    "hints": ["Element UI / Vue 表单"]
+  },
+  "fields": {},
+  "quirks": {
+    "real_keys": true,
+    "false_save_error": "commitOthers is not a function",
+    "back_blank": true,
+    "readonly_date": false
+  },
+  "save": {"enabled": true, "hints": ["保存", "保存并下一步"]},
+  "submit": {"enabled": true, "hints": ["提交", "确认提交"]}
+}

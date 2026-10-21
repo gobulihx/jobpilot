@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>校园招聘简历</title></head>
+<body>
+<h2>基本信息</h2>
+<form class="el-form" id="f">
+  <div class="el-form-item">
+    <label class="el-form-item__label">姓名</label>
+    <input class="el-input__inner" name="name" maxlength="20">
+  </div>
+  <div class="el-form-item">
+    <label class="el-form-item__label">手机号码</label>
+    <input class="el-input__inner" name="phone">
+  </div>
+  <div class="el-form-item">
+    <label class="el-form-item__label">最高学历</label>
+    <select class="el-select" name="degree">
+      <option value=""></option><option>本科</option><option>硕士</option><option>博士</option>
+    </select>
+  </div>
+  <button type="button" id="save">保存</button>
+</form>
+<div id="saved"></div>
+<div id="err"></div>
+<script>
+  // 复刻 Element UI / Vue 的行为：只有真实键盘事件才更新模型；
+  // 直接给 value 赋值，DOM 上看得见，但保存时序列化的是模型，所以会丢。
+  const model = {};
+  document.querySelectorAll('input,textarea').forEach((el) => {
+    // 文本框/文本域：只有真实键盘事件才更新模型
+    const update = (e) => { if (e.isTrusted) model[el.name] = el.value; };
+    el.addEventListener('input', update);
+    el.addEventListener('change', update);
+  });
+  document.querySelectorAll('select').forEach((el) => {
+    // 原生下拉：change 事件即更新（真实站点里是点选项触发的可信事件）
+    el.addEventListener('change', () => { model[el.name] = el.value; });
+  });
+  document.getElementById('save').addEventListener('click', () => {
+    document.getElementById('saved').textContent = JSON.stringify(model);
+    document.getElementById('err').textContent = 'commitOthers is not a function';
+  });
+  window.__model = model;
+</script>
+</body>
+</html>

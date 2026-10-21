@@ -1,0 +1,4 @@
+#!/bin/sh
+# jobpilot 入口：不依赖安装，直接把仓库根加进路径。
+DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+PYTHONPATH="$DIR${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m jobpilot.cli "$@"
