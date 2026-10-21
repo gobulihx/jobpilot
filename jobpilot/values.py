@@ -19,7 +19,8 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 def empty() -> dict:
     return {"person": {}, "contact": {}, "education": [], "languages": [], "experiences": [],
-            "family": [], "awards": [], "intent": {}, "narratives": {}, "flags": {}, "prefs": {}}
+            "family": [], "awards": [], "intent": {}, "narratives": {}, "flags": {},
+            "prefs": {}, "skipped": []}
 
 
 def _parts(path: str) -> list[str]:
@@ -141,6 +142,19 @@ def missing(values: dict, ids: tuple[str, ...] | list[str] | None = None) -> lis
         if not ok:
             out.append(path)
     return out
+
+
+def skipped(values: dict) -> set[str]:
+    return set(values.get("skipped", []) or [])
+
+
+def skip(values: dict, path: str, on: bool = True) -> None:
+    current = set(values.get("skipped", []) or [])
+    if on:
+        current.add(path)
+    else:
+        current.discard(path)
+    values["skipped"] = sorted(current)
 
 
 def check_value(path: str, raw) -> str | None:

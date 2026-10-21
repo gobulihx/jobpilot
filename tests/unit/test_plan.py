@@ -56,6 +56,25 @@ class PlanTest(unittest.TestCase):
         p = build(form=raw)
         self.assertEqual(p["blocking"], [])
         self.assertEqual(len(p["optional_missing"]), 1)
+        self.assertEqual(p["optional_missing"][0]["label"], "爱好")
+
+    def test_optional_missing_is_not_silent_in_review(self):
+        from jobpilot import review
+        raw = json.loads(FIX.read_text(encoding="utf-8"))
+        raw["controls"] = [{"label": "爱好", "kind": "text", "required": False}]
+        p = build(form=raw)
+        text = review.render(p)
+        self.assertIn("爱好", text)
+        self.assertIn("可以补，也可以跳过", text)
+
+    def test_skip_removes_optional_from_plan(self):
+        from jobpilot import values as v
+        raw = json.loads(FIX.read_text(encoding="utf-8"))
+        raw["controls"] = [{"label": "爱好", "kind": "text", "required": False}]
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        v.skip(vals, "narratives.hobby")
+        p = build(vals=vals, form=raw)
+        self.assertEqual(p["optional_missing"], [])
 
     def test_long_value_uses_short_alias(self):
         vals = profile._seed_values(profile.DEMO_PROFILE)

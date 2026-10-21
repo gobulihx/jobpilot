@@ -14,6 +14,14 @@ def _show(value, sensitive: bool) -> str:
     return str(value)
 
 
+def _type_hint(item: dict) -> str:
+    hints = {"number": "（数字）", "date": "（2000-01-01）", "month": "（2026-11）",
+             "email": "（邮箱）", "tel": "（电话）", "long_text": "（长文本）"}
+    if item.get("maxlen"):
+        return f"（不超过 {item['maxlen']} 字）"
+    return hints.get(item.get("type", ""), "")
+
+
 def render(plan: dict, masked: bool = True) -> str:
     lines = []
     total = plan.get("stats", {}).get("actions", 0)
@@ -52,9 +60,15 @@ def render(plan: dict, masked: bool = True) -> str:
         for u in others:
             hint = f"，建议「{u.get('suggest')}」" if u.get("suggest") else ""
             lines.append(f"  · {u['label']}：{u['reason']}{hint}")
-    if plan.get("optional_missing"):
+    optional = plan.get("optional_missing", [])
+    if optional:
         lines.append("")
-        lines.append(f"【选填没填（{len(plan['optional_missing'])} 项，可以跳过）】")
+        lines.append(f"【选填没填（{len(optional)} 项，可以补，也可以跳过）】")
+        for u in optional[:8]:
+            lines.append(f"  · {u['label']}{_type_hint(u)}")
+        if len(optional) > 8:
+            lines.append(f"  ……还有 {len(optional) - 8} 项")
+        lines.append("  要补就说；跳过的话说一声，以后不再问。")
     if plan.get("warnings"):
         lines.append("")
         for w in plan["warnings"]:

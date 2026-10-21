@@ -124,6 +124,14 @@ class CliTest(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("数字", out)
 
+    def test_values_skip(self):
+        self.run_cli("init", "--demo")
+        code, out = self.run_cli("values", "skip", "narratives.hobby")
+        self.assertEqual(code, 0)
+        self.assertIn("不再问", out)
+        data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
+        self.assertIn("narratives.hobby", data["skipped"])
+
     def test_ledger_and_export(self):
         self.assertEqual(self.run_cli("ledger", "add", "--company", "甲", "--position", "岗")[0], 0)
         self.assertEqual(self.run_cli("ledger", "add", "--company", "甲", "--position", "岗")[0], 0)

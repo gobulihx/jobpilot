@@ -123,6 +123,7 @@ def _build_action(control: dict, path: str, value, entry, card: dict):
 def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                  run_id: str | None = None, save: bool = False) -> dict:
     alias_index = schema.alias_index()
+    skipped = values_mod.skipped(vals)
     steps = []
     unmapped: list[dict] = []
     optional_missing: list[dict] = []
@@ -144,16 +145,19 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
             m = match_control(c, card, alias_index)
             conf = m["confidence"]
             if not m["canonical"]:
-                if c.get("required") or c["kind"] not in ("text",):
-                    item = {
-                        "cid": c["cid"], "label": c["label"], "module": mod,
-                        "reason": m["reason"], "options": m.get("options", []),
-                        "required": bool(c.get("required")), "canonical": None,
-                    }
+                if not c.get("label"):
+                    continue
+                item = {
+                    "cid": c["cid"], "label": c["label"], "module": mod,
+                    "reason": m["reason"], "options": m.get("options", []),
+                    "required": bool(c.get("required")), "canonical": None,
+                }
+                if c.get("required"):
                     unmapped.append(item)
-                    if c.get("required"):
-                        blocking.append({"cid": c["cid"], "label": c["label"],
-                                         "reason": m["reason"], "path": None})
+                    blocking.append({"cid": c["cid"], "label": c["label"],
+                                     "reason": m["reason"], "path": None})
+                else:
+                    optional_missing.append(item)
                 continue
             if conf < SUGGEST:
                 unmapped.append({"cid": c["cid"], "label": c["label"], "module": mod,
@@ -176,7 +180,7 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                     blocking.append({"cid": c["cid"], "label": c["label"],
                                      "reason": "缺值", "path": path,
                                      "type": item["type"], "maxlen": item["maxlen"]})
-                else:
+                elif path not in skipped:
                     optional_missing.append(item)
                 continue
 

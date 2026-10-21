@@ -122,6 +122,15 @@ def cmd_values(args) -> int:
         home.write_json(_values_path(), vals)
         _print(f"记下了：{schema.label_for(args.path)}")
         return 0
+    if args.action in ("skip", "unskip"):
+        if not args.path:
+            _print("要跳过哪一项？")
+            return 2
+        values_mod.skip(vals, args.path, on=args.action == "skip")
+        home.write_json(_values_path(), vals)
+        verb = "以后不再问" if args.action == "skip" else "重新算进待填"
+        _print(f"记下了：{schema.label_for(args.path)} {verb}。")
+        return 0
     if args.action == "set-many":
         if not args.file:
             _print("给一个答案文件（--file answers.json）")
@@ -256,6 +265,12 @@ def cmd_run(args) -> int:
             _print(f"  ……还有 {len(still) - 5} 项")
         _print("补完人家再开始，省得你填一半卡住。")
         return 2
+
+    optional = compiled.get("optional_missing") or []
+    if optional:
+        names = "、".join(u["label"] for u in optional[:5])
+        more = f" 等 {len(optional)} 项" if len(optional) > 5 else ""
+        _print(f"提醒一句：{names}{more}是选填，还空着。确认跳过就继续。")
 
     state_path = home.run_dir(compiled["run_id"]) / "run-state.json"
 
@@ -479,7 +494,7 @@ def build_parser() -> argparse.ArgumentParser:
     i.set_defaults(func=cmd_init)
 
     v = sub.add_parser("values", help="看/补字段")
-    v.add_argument("action", choices=["show", "missing", "set", "set-many"])
+    v.add_argument("action", choices=["show", "missing", "set", "set-many", "skip", "unskip"])
     v.add_argument("path", nargs="?")
     v.add_argument("value", nargs="?")
     v.add_argument("--file")

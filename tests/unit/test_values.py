@@ -40,6 +40,12 @@ class ValuesTest(unittest.TestCase):
         self.assertIsNone(values.check_value("intent.adjust", "是"))
         self.assertIsNotNone(values.check_value("intent.adjust", "也许"))
 
+    def test_skip_memory(self):
+        values.skip(self.v, "narratives.hobby")
+        self.assertIn("narratives.hobby", values.skipped(self.v))
+        values.skip(self.v, "narratives.hobby", on=False)
+        self.assertNotIn("narratives.hobby", values.skipped(self.v))
+
     def test_validate_flags_bad_date(self):
         values.set_value(self.v, "person.birth_date", "1999/01/01", type_="date")
         issues = values.validate(self.v)
