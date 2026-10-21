@@ -59,6 +59,20 @@ QUESTIONS = (
 
 ROUNDS = [QUESTIONS[i:i + 3] for i in range(0, len(QUESTIONS), 3)]
 
+# 高频补全：第一次填表前，助手可以主动提议补这 8 项
+EXTRA_QUESTIONS = (
+    ("姓名", "person.name"),
+    ("手机号", "contact.phone"),
+    ("邮箱", "contact.email"),
+    ("身份证号", "person.id_no"),
+    ("出生日期（2000-01-01）", "person.birth_date"),
+    ("现居地址", "contact.current_address"),
+    ("紧急联系人姓名", "contact.emergency_name"),
+    ("简历文件路径", "prefs.resume"),
+)
+
+EXTRA_ROUNDS = [EXTRA_QUESTIONS[i:i + 3] for i in range(0, len(EXTRA_QUESTIONS), 3)]
+
 
 def _as_value(field_path: str, raw):
     f = schema.field_for(field_path)
@@ -138,5 +152,6 @@ def rounds() -> list[list[tuple[str, str]]]:
     return ROUNDS
 
 
-def questions_json() -> list[list[dict]]:
-    return [[{"label": label, "path": path} for label, path in round_] for round_ in ROUNDS]
+def questions_json(extra: bool = False) -> list[list[dict]]:
+    rounds = EXTRA_ROUNDS if extra else ROUNDS
+    return [[{"label": label, "path": path} for label, path in round_] for round_ in rounds]

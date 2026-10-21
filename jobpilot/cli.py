@@ -221,14 +221,8 @@ def cmd_review(args) -> int:
     if args.json:
         _print(json.dumps(compiled, ensure_ascii=False, indent=2))
     else:
-        _print("\n".join(plan_mod.explain(compiled)))
-        _print("")
-        _print("—" * 20)
-        _print("")
         from . import review
         _print(review.render(compiled, masked=not args.no_mask))
-        _print("")
-        _print(f"审阅码：{review.approval_token(compiled)}（记在运行记录里就行）")
     return 0
 
 
@@ -307,8 +301,10 @@ def cmd_run(args) -> int:
 
     if not result["ok"]:
         for item in result["failed"][:3]:
-            _print(f"  · {item.get('message', '这一步没成')}")
-        _print("停在出错的地方了，可以改完接着来。")
+            gap = item.get("gap") or {}
+            label = gap.get("label") or "这一项"
+            _print(f"  · {label}：没填上。要不要换种填法，或者你自己填？")
+        _print("停在出错的地方了，改完可以接着来。")
         return 1
     _print("都填好了，停在提交前。")
     return 0
@@ -425,6 +421,30 @@ def cmd_inbox(args) -> int:
         return 0
     finally:
         db.close()
+
+
+# --------------------------------------------------------------------------- extras
+def cmd_extras(args) -> int:
+    if args.questions:
+        _print(json.dumps(profile.questions_json(extra=True), ensure_ascii=False, indent=2))
+        return 0
+    if not args.answers:
+        _print("给一个答案文件（--answers answers.json）")
+        return 2
+    data = _load_json_arg(args.answers, {})
+    vals = home.read_json(_values_path(), values_mod.empty()) or values_mod.empty()
+    issues = [(path, values_mod.check_value(path, raw, vals)) for path, raw in data.items()]
+    issues = [(path, msg) for path, msg in issues if msg]
+    if issues:
+        for path, msg in issues:
+            _print(f"  · {msg}")
+        _print("这几项不太对，改一下再给人家。")
+        return 2
+    for path, raw in data.items():
+        values_mod.set_value(vals, path, raw)
+    home.write_json(_values_path(), vals)
+    _print(f"记下了 {len(data)} 项，以后填表会直接用。")
+    return 0
 
 
 # --------------------------------------------------------------------------- fields
@@ -618,6 +638,11 @@ def build_parser() -> argparse.ArgumentParser:
     ib.add_argument("--mails", required=True)
     ib.add_argument("--apply", action="store_true")
     ib.set_defaults(func=cmd_inbox)
+
+    ex = sub.add_parser("extras", help="高频补全项")
+    ex.add_argument("--questions", action="store_true")
+    ex.add_argument("--answers")
+    ex.set_defaults(func=cmd_extras)
 
     fd = sub.add_parser("fields", help="字段表里没有的字段")
     fd.add_argument("action", choices=["add", "map", "list", "remove"])

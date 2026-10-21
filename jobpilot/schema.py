@@ -144,6 +144,7 @@ _RAW = [
     # 十一、偏好（不是网申字段）
     ("prefs.resume", "简历版本", "file", "prefs", (), False, None, False),
     ("prefs.submit", "提交模式", "enum", "prefs", (), False, None, False),
+    ("prefs.fill_mode", "填写模式", "enum", "prefs", (), False, None, False),
     ("prefs.photo", "证件照", "file", "prefs", (), False, None, False),
 ]
 

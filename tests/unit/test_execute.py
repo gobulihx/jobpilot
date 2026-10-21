@@ -54,6 +54,15 @@ class ExecuteTest(unittest.TestCase):
         # 已经完成的 4 个不会重复操作
         self.assertEqual(len(backend.log), 7)
 
+    def test_failure_carries_gap(self):
+        p, vals = make_plan()
+        aid = p["steps"][0]["actions"][0]["aid"]
+        result = run_plan(p, vals, FakeBackend(fail_on={aid}))
+        self.assertFalse(result["ok"])
+        gap = result["failed"][0]["gap"]
+        self.assertTrue(gap["label"])
+        self.assertTrue(gap["reason"])
+
     def test_missing_value_stops(self):
         p, vals = make_plan()
         values.delete_path(vals, "person.name")

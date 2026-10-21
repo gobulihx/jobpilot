@@ -90,7 +90,7 @@ class CliTest(unittest.TestCase):
 
         code, out = self.run_cli("review", str(plan_path))
         self.assertEqual(code, 0)
-        self.assertIn("停在提交前", out)
+        self.assertIn("先补上面这几项", out)
 
         code, out = self.run_cli("sheet", str(plan_path), "--out", str(Path(self.home) / "s.md"))
         self.assertEqual(code, 0)
@@ -154,6 +154,19 @@ class CliTest(unittest.TestCase):
         code, out = self.run_cli("fields", "list")
         self.assertIn("GRE", out)
         self.assertIn("最高学历学校", out)
+
+    def test_extras_questions_and_answers(self):
+        code, out = self.run_cli("extras", "--questions")
+        self.assertEqual(code, 0)
+        rounds = json.loads(out)
+        self.assertEqual(sum(len(r) for r in rounds), 8)
+        answers = Path(self.home) / "extras.json"
+        answers.write_text(json.dumps({"person.name": "李四", "contact.phone": "13900000000"}),
+                           encoding="utf-8")
+        code, out = self.run_cli("extras", "--answers", str(answers))
+        self.assertEqual(code, 0)
+        data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["person"]["name"]["v"], "李四")
 
     def test_values_skip(self):
         self.run_cli("init", "--demo")

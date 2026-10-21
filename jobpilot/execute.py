@@ -96,8 +96,14 @@ def run_plan(plan: dict, vals: dict, backend, state_path: Path | None = None,
             try:
                 resolved = _resolve_action(plan, action, vals)
             except ExecuteError as exc:
-                results.append({"aid": aid, "ok": False, "message": humanize.say("missing_value", n=1),
-                                "code": exc.code})
+                results.append({
+                    "aid": aid, "ok": False, "message": humanize.say("missing_value", n=1),
+                    "code": exc.code,
+                    "gap": {"cid": action["target"].get("cid"),
+                            "label": action["target"].get("label", ""),
+                            "module": action["target"].get("module", ""),
+                            "reason": exc.detail or exc.code},
+                })
                 failed = True
                 break
 
@@ -110,6 +116,11 @@ def run_plan(plan: dict, vals: dict, backend, state_path: Path | None = None,
                     break
 
             outcome = backend.perform(resolved)
+            if not outcome.get("ok"):
+                outcome["gap"] = {"cid": action["target"].get("cid"),
+                                  "label": action["target"].get("label", ""),
+                                  "module": action["target"].get("module", ""),
+                                  "reason": outcome.get("message", "")}
             results.append({"aid": aid, **outcome})
             if outcome.get("ok"):
                 done.add(aid)

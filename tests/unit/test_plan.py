@@ -65,7 +65,7 @@ class PlanTest(unittest.TestCase):
         p = build(form=raw)
         text = review.render(p)
         self.assertIn("爱好", text)
-        self.assertIn("可以补，也可以跳过", text)
+        self.assertIn("选填没填", text)
 
     def test_skip_removes_optional_from_plan(self):
         from jobpilot import values as v
@@ -142,6 +142,29 @@ class PlanTest(unittest.TestCase):
         p = build(vals=vals, form=raw)
         act = p["steps"][0]["actions"][0]
         self.assertEqual(act["value_ref"], "education.0.school")
+
+    def test_required_select_without_option_blocks(self):
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        raw = {"url": "x", "module": "教育经历",
+               "controls": [{"label": "最高学历", "kind": "enum", "required": True,
+                             "options": ["本科", "博士"]}]}
+        p = build(vals=vals, form=raw)
+        self.assertEqual(len(p["blocking"]), 1)
+        self.assertIn("选项里没有", p["blocking"][0]["reason"])
+
+    def test_untagged_required_blocks(self):
+        raw = {"url": "x", "module": "基本信息",
+               "controls": [{"label": "", "kind": "text", "required": True}]}
+        p = build(form=raw)
+        self.assertEqual(p["blocking"][0]["label"], "（未命名字段）")
+
+    def test_required_only_mode_hides_optional(self):
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        values.set_value(vals, "prefs.fill_mode", "required_only")
+        raw = {"url": "x", "module": "基本信息",
+               "controls": [{"label": "爱好", "kind": "text", "required": False}]}
+        p = build(vals=vals, form=raw)
+        self.assertEqual(p["optional_missing"], [])
 
     def test_unknown_required_blocks(self):
         raw = {"url": "x", "module": "基本信息",

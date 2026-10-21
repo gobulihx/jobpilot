@@ -125,6 +125,7 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
     alias_index = dict(schema.alias_index())
     alias_index.update(values_mod.custom_alias_index(vals))
     skipped = values_mod.skipped(vals)
+    fill_mode = values_mod.get_value(vals, "prefs.fill_mode", "full") or "full"
     steps = []
     unmapped: list[dict] = []
     optional_missing: list[dict] = []
@@ -147,6 +148,12 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
             conf = m["confidence"]
             if not m["canonical"]:
                 if not c.get("label"):
+                    if c.get("required"):
+                        item = {"cid": c["cid"], "label": "（未命名字段）", "module": mod,
+                                "reason": "页面上没有标签", "required": True, "canonical": None}
+                        unmapped.append(item)
+                        blocking.append({"cid": c["cid"], "label": item["label"],
+                                         "module": mod, "reason": item["reason"], "path": None})
                     continue
                 item = {
                     "cid": c["cid"], "label": c["label"], "module": mod,
@@ -155,9 +162,9 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 }
                 if c.get("required"):
                     unmapped.append(item)
-                    blocking.append({"cid": c["cid"], "label": c["label"],
+                    blocking.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                      "reason": m["reason"], "path": None})
-                else:
+                elif fill_mode != "required_only":
                     optional_missing.append(item)
                 continue
             if conf < SUGGEST:
@@ -178,10 +185,10 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 }
                 if c.get("required"):
                     unmapped.append(item)
-                    blocking.append({"cid": c["cid"], "label": c["label"],
+                    blocking.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                      "reason": "缺值", "path": path,
                                      "type": item["type"], "maxlen": item["maxlen"]})
-                elif path not in skipped:
+                elif path not in skipped and fill_mode != "required_only":
                     optional_missing.append(item)
                 continue
 
@@ -192,6 +199,9 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
             if problem:
                 problem["module"] = mod
                 unmapped.append(problem)
+                if c.get("required"):
+                    blocking.append({"cid": c["cid"], "label": c["label"], "module": mod,
+                                     "reason": problem["reason"], "path": path})
                 continue
             if warning:
                 warnings.append(warning)
@@ -200,7 +210,7 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 unmapped.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                  "reason": "匹配把握不大，请确认", "suggest": m["canonical"]})
                 if c.get("required"):
-                    blocking.append({"cid": c["cid"], "label": c["label"],
+                    blocking.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                      "reason": "匹配把握不大", "path": path})
             actions.append(action)
             total += 1

@@ -22,6 +22,32 @@ def _type_hint(item: dict) -> str:
     return hints.get(item.get("type", ""), "")
 
 
+def _section(lines: list[str], title: str, items: list[dict], limit: int | None = None,
+             footer: str = "") -> None:
+    if not items:
+        return
+    lines.append("")
+    lines.append(f"【{title}（{len(items)} 项）】")
+    groups: dict[str, list[dict]] = {}
+    for u in items:
+        groups.setdefault(u.get("module", ""), []).append(u)
+    shown = 0
+    for module, group in groups.items():
+        if len(groups) > 1 and module:
+            lines.append(f"  〔{module}〕")
+        for u in group:
+            if limit is not None and shown >= limit:
+                break
+            hint = _type_hint(u)
+            suggest = f"，建议「{u['suggest']}」" if u.get("suggest") else ""
+            lines.append(f"  · {u['label']}{hint}：{u['reason']}{suggest}")
+            shown += 1
+    if limit is not None and len(items) > limit:
+        lines.append(f"  ……还有 {len(items) - limit} 项")
+    if footer:
+        lines.append(f"  {footer}")
+
+
 def render(plan: dict, masked: bool = True) -> str:
     lines = []
     total = plan.get("stats", {}).get("actions", 0)
@@ -48,33 +74,22 @@ def render(plan: dict, masked: bool = True) -> str:
     blocking = {b.get("cid") for b in plan.get("blocking", [])}
     required = [u for u in plan.get("unmapped", []) if u.get("cid") in blocking]
     others = [u for u in plan.get("unmapped", []) if u.get("cid") not in blocking]
-    if required:
-        lines.append("")
-        lines.append(f"【先补这几项，才能开始填（{len(required)} 项）】")
-        for u in required:
-            hint = f"，建议「{u.get('suggest')}」" if u.get("suggest") else ""
-            lines.append(f"  · {u['label']}：{u['reason']}{hint}")
-    if others:
-        lines.append("")
-        lines.append("【其他要确认的】")
-        for u in others:
-            hint = f"，建议「{u.get('suggest')}」" if u.get("suggest") else ""
-            lines.append(f"  · {u['label']}：{u['reason']}{hint}")
     optional = plan.get("optional_missing", [])
-    if optional:
-        lines.append("")
-        lines.append(f"【选填没填（{len(optional)} 项，可以补，也可以跳过）】")
-        for u in optional[:8]:
-            lines.append(f"  · {u['label']}{_type_hint(u)}")
-        if len(optional) > 8:
-            lines.append(f"  ……还有 {len(optional) - 8} 项")
-        lines.append("  要补就说；跳过的话说一声，以后不再问。")
+
+    _section(lines, "先补这几项，才能开始填", required)
+    _section(lines, "其他要确认的", others)
+    _section(lines, "选填没填，可以补也可以跳过", optional, limit=8,
+             footer="要补就说；跳过的话说一声，以后不再问。")
+
     if plan.get("warnings"):
         lines.append("")
         for w in plan["warnings"]:
             lines.append(f"  ！{w}")
     lines.append("")
-    lines.append("停在提交前，等你点头。")
+    if blocking:
+        lines.append("先补上面这几项，人家再开始。")
+    else:
+        lines.append("停在提交前，等你点头。")
     return "\n".join(lines)
 
 
