@@ -29,8 +29,9 @@ def _port_open(port: int, host: str = "127.0.0.1") -> bool:
 
 
 def capabilities() -> dict:
+    from . import sitecards
     root = home.ensure_layout()
-    cards = list((Path(__file__).resolve().parent.parent / "sitecards").rglob("*.json"))
+    cards = sitecards.all_cards(extra_dir=root / "sites")
     writable = os.access(root, os.W_OK)
     return {
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
@@ -59,7 +60,7 @@ def summary(caps: dict) -> list[str]:
         lines.append("自动填表：还没准备。想用就装一下，不想装也能生成填写稿。")
     lines.append("表格导出：" + ("能用" if caps["xlsx"] else "先用 csv，装上表格组件后可以导出 Excel。"))
     lines.append(f"数据目录：{caps['home']}（{'可写' if caps['home_writable'] else '不可写'}）")
-    lines.append(f"站点卡：{caps['sitecards']} 张")
+    lines.append(f"站点卡：{caps['sitecards']} 张（平台/框架级，公司专属卡放本地）")
     lines.append("搜索：看助手手上有没有搜索工具；有就直接用，没有就只读你给的链接。")
     return lines
 
