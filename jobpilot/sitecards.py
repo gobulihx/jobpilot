@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 CARD_DIR = Path(__file__).resolve().parent.parent / "sitecards"
@@ -23,7 +24,14 @@ def _merge(base: dict, over: dict) -> dict:
     return out
 
 
+def _safe_id(card_id: str) -> str:
+    if not re.fullmatch(r"[\w.-]+", str(card_id or "")) or str(card_id) in (".", ".."):
+        raise ValueError("站点卡名字不合法")
+    return str(card_id)
+
+
 def load(card_id: str = "_generic", extra_dir: Path | None = None) -> dict:
+    card_id = _safe_id(card_id)
     generic = _read(CARD_DIR / "_generic.json")
     card = generic
     p = CARD_DIR / "sites" / f"{card_id}.json"

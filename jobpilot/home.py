@@ -33,7 +33,16 @@ def ensure_layout() -> Path:
 
 
 def run_dir(run_id: str) -> Path:
-    d = ensure_layout() / "runs" / run_id
+    """运行目录只允许普通文件名，防止计划文件里的 run_id 穿越到别处。"""
+    import re
+
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", str(run_id or "run"))
+    if safe in ("", ".", ".."):
+        safe = "run"
+    root = (ensure_layout() / "runs").resolve()
+    d = (root / safe).resolve()
+    if not str(d).startswith(str(root) + os.sep):
+        raise ValueError("run_id 不合法")
     d.mkdir(parents=True, exist_ok=True)
     try:
         os.chmod(d, 0o700)

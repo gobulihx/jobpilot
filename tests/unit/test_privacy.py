@@ -19,6 +19,11 @@ class PrivacyTest(unittest.TestCase):
         hits = privacy.scan_text("身份证 110101199901011234 手机 13800001234 邮箱 a@b.com")
         self.assertEqual(set(hits), {"身份证号", "手机号", "邮箱"})
 
+    def test_scan_secrets(self):
+        self.assertIn("GitHub Token", privacy.scan_secrets("ghp_" + "a" * 36))
+        self.assertIn("Private Key", privacy.scan_secrets("-----BEGIN RSA PRIVATE KEY-----"))
+        self.assertEqual(privacy.scan_secrets("sk-short"), [])
+
     def test_scan_repo_finds_leak(self):
         root = Path(tempfile.mkdtemp())
         (root / "notes.md").write_text("身份证 110101199901011234", encoding="utf-8")

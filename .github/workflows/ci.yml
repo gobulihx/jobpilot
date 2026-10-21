@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   unit:
     name: 单元测试 py${{ matrix.python }}
@@ -57,6 +60,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m jobpilot privacy scan
+      - name: 密钥模式
+        run: |
+          if git grep -nE 'AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY' -- . ':!tests'; then
+            echo "发现疑似密钥"; exit 1
+          fi
       - name: 大文件检查
         run: |
           find . -type f -size +2M -not -path './.git/*' | tee /tmp/big

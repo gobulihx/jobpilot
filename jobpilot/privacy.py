@@ -12,6 +12,15 @@ ID_RE = re.compile(r"(?<!\d)(\d{6})(\d{8})(\d{3}[\dXx])(?!\d)")
 PHONE_RE = re.compile(r"(?<!\d)(1[3-9]\d)(\d{4})(\d{4})(?!\d)")
 EMAIL_RE = re.compile(r"([A-Za-z0-9._%+-]{1,3})[A-Za-z0-9._%+-]*(@[A-Za-z0-9.-]+\.[A-Za-z]{2,})")
 
+SECRET_PATTERNS = {
+    "AWS Access Key": re.compile(r"AKIA[0-9A-Z]{16}"),
+    "GitHub Token": re.compile(r"(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,})"),
+    "Private Key": re.compile(r"-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+    "Slack Token": re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"),
+    "API Key": re.compile(r"sk-[A-Za-z0-9]{20,}"),
+    "Google API Key": re.compile(r"AIza[0-9A-Za-z_-]{35}"),
+}
+
 SENSITIVE_IDS = {
     "person.id_no",
     "family.id_no",
@@ -47,6 +56,10 @@ def mask_obj(obj):
     if isinstance(obj, list):
         return [mask_obj(v) for v in obj]
     return mask(obj)
+
+
+def scan_secrets(text: str) -> list[str]:
+    return [name for name, pattern in SECRET_PATTERNS.items() if pattern.search(text)]
 
 
 def scan_text(text: str) -> list[str]:
@@ -86,7 +99,7 @@ def scan_repo(root: Path, allow: tuple[str, ...] = ()) -> list[tuple[str, list[s
             continue
         if "jobpilot-privacy-allow" in text:
             continue
-        hits = scan_text(text)
+        hits = scan_text(text) + scan_secrets(text)
         if hits:
             found.append((rel, hits))
     return found

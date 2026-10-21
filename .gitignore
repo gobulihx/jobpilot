@@ -26,5 +26,13 @@ uv.lock
 .pytest_cache/
 .ruff_cache/
 
+# 密钥与凭据
+.env
+.env.*
+*.key
+*.pem
+credentials*
+secrets*
+
 # 系统
 .DS_Store
