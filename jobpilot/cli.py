@@ -178,7 +178,8 @@ def cmd_probe(args) -> int:
         probe_js = (ROOT_DIR / "runner" / "probe.js").read_text(encoding="utf-8")
         backend = CdpBackend()
         try:
-            backend.fresh(args.url)
+            # 同一个 URL 的标签页优先复用，避免把用户填到一半的进度冲掉
+            backend.use(args.url)
             raw = backend.page.evaluate(probe_js)
         finally:
             backend.close()
