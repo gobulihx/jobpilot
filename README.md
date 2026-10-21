@@ -89,7 +89,8 @@ probe     match      plan      review   run     verify   ledger
 | 邮箱 | 扫回执、提议改状态 | 每周手动导出一次 |
 | openpyxl | 导出 xlsx | 导出 csv |
 
-**装了就会自己用，不用额外配置。**
+**强烈建议装。** 装了就会自己用，不用额外配置；不装也能生成填写稿。
+完整安装、验证、排错见 [references/browser-setup.md](references/browser-setup.md)。
 
 - 先连你已经开着的 Chrome（调试口 9222）；
 - 连不上就自己开一个专用浏览器，第一次登录一次，之后记住；
@@ -106,7 +107,8 @@ python3 -m playwright install chromium
 open -na "Google Chrome" --args --remote-debugging-port=9222
 ```
 
-**搜索工具**（exa / DeepSeek Web）由助手在对话里判断：装了就直接搜，没装就只读你给的链接。
+**搜索工具**由助手在对话里判断：推荐 exa；如果你已经在用 DeepSeek 官方 API，
+用它自带的搜索也行。装了就直接搜，没装就只读你给的链接。
 CLI 本身不联网搜索，也不检测你装了哪个搜索工具。
 
 ## 隐私
