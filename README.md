@@ -19,26 +19,28 @@
 
 ## 抱回家
 
-需要 Python 3.11 及以上（`python3 --version` 看一眼）。
+需要 Python 3.11 及以上。
 
-### 用 Claude Code
+跟你的 agent 说一句：
+
+> 把 https://github.com/gobulihx/jobpilot 装成技能
+
+它自己会找技能目录。Claude Code 一般在 `~/.claude/skills/`，别的 agent 问它自己。
+
+装完再说：
+
+> 帮我弄求职助手
+
+<details>
+<summary>想自己动手</summary>
 
 ```bash
 git clone https://github.com/gobulihx/jobpilot ~/.claude/skills/jobpilot
 ```
 
-重开，跟我说一句：
+其他 agent 克隆到任意目录，让它读 `SKILL.md` 就行。
 
-> 帮我弄求职助手
-
-### 用别的 agent
-
-```bash
-git clone https://github.com/gobulihx/jobpilot ~/jobpilot
-```
-
-让助手读 `~/jobpilot/SKILL.md`，或者直接跑 `~/jobpilot/bin/jobpilot`。
-目前只支持 clone，不通过 pip 发布。
+</details>
 
 ## 跟本鲸说话就行
 
