@@ -309,7 +309,9 @@ def flat(values: dict, mask: bool = False) -> list[dict]:
         val = get_value(values, path)
         if _is_empty(val):
             continue
-        if isinstance(val, list):
+        if isinstance(val, bool):
+            val = "是" if val else "否"
+        elif isinstance(val, list):
             val = "、".join(str(x) for x in val)
         if mask and (f and f.sensitive or (isinstance(val, str) and _looks_sensitive(val))):
             val = mask_value(val)
