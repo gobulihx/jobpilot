@@ -85,7 +85,7 @@ python3 ~/.claude/skills/jobpilot/bin/jobpilot doctor
 
 - 不保存账号密码，登录永远由用户自己做。
 - 专用 profile 只在本机，权限 700。
-- 截图和计划落在 `~/.jobpilot/runs/`，不进仓库。
+- 运行记录和计划落在 `~/.jobpilot/runs/`，不进仓库。
 
 ## 卸载
 

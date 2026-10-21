@@ -86,7 +86,7 @@ python3 -m playwright install chromium
 
 ## 数据在哪
 
-只在本机 `~/.jobpilot/`：目录 700，值文件 600，日志脱敏，截图不往上传。
+只在本机 `~/.jobpilot/`：目录 700，值文件 600，日志脱敏，运行记录不往上传。
 
 想删就删：
 
