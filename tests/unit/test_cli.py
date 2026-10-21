@@ -72,7 +72,7 @@ class CliTest(unittest.TestCase):
         self.run_cli("init", "--demo")
         plan_path = Path(self.home) / "plan.json"
         code, out = self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
-                                 "--card", "element-ui", "--out", str(plan_path))
+                                 "--out", str(plan_path))
         self.assertEqual(code, 0)
         self.assertTrue(plan_path.exists())
 
@@ -88,7 +88,7 @@ class CliTest(unittest.TestCase):
         self.run_cli("init", "--demo")
         plan_path = Path(self.home) / "plan.json"
         self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
-                     "--card", "element-ui", "--out", str(plan_path))
+                     "--out", str(plan_path))
 
         # 必填没补齐：拒绝开始，并说清差什么
         code, out = self.run_cli("run", str(plan_path), "--backend", "fake")
@@ -111,7 +111,7 @@ class CliTest(unittest.TestCase):
 
         # 重新生成后就能填了
         self.run_cli("plan", "--form", str(ROOT / "tests/fixtures/element-ui.form.json"),
-                     "--card", "element-ui", "--out", str(plan_path))
+                     "--out", str(plan_path))
         code, out = self.run_cli("run", str(plan_path), "--backend", "fake")
         self.assertEqual(code, 0)
         self.assertIn("停在提交前", out)

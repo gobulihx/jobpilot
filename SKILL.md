@@ -107,7 +107,7 @@ MCP 探测的写法：把 `runner/probe.js` 的内容交给浏览器工具执行
 python3 "$SKILL_DIR/bin/jobpilot" probe --url "https://..."
 
 # 2. 生成计划（模型只做映射，不往页面打字）
-python3 "$SKILL_DIR/bin/jobpilot" plan --form 表单.json --card element-ui
+python3 "$SKILL_DIR/bin/jobpilot" plan --form 表单.json
 
 # 3. 给用户看一份 diff（掩码）
 python3 "$SKILL_DIR/bin/jobpilot" review 计划.json
@@ -146,8 +146,8 @@ python3 "$SKILL_DIR/bin/jobpilot" sheet 计划.json
 **执行完不要关浏览器、不要关标签页。** 告诉用户「页面留着，你看一眼，没问题自己点提交」。
 第一次自动开专用浏览器时，让用户登录一次，之后会记住。
 
-站点知识见 `references/apply-playbook.md` 和 `references/site-card-spec.md`。
-**公司专属的卡只写本地**（`~/.jobpilot/sites/<域名>.json`），不要提交进仓库。
+站点知识见 `references/apply-playbook.md`。**默认为空**：字段靠字段表，怪行为靠通用规则。
+只有遇到标签/按钮特别怪的站，才在本机写一张覆盖（`~/.jobpilot/sites/<域名>.json`），不要提交进仓库。
 
 ### 四、记账
 
@@ -202,7 +202,7 @@ python3 "$SKILL_DIR/bin/jobpilot" inbox --mails 邮件.json
 | 台账 | `~/.jobpilot/ledger.db` |
 | 每次运行的计划与截图 | `~/.jobpilot/runs/<run_id>/`（700） |
 | 导出 | `~/.jobpilot/exports/` |
-| 站点卡 | 仓库 `sitecards/`（平台/框架级）+ `~/.jobpilot/sites/`（公司专属，本地优先） |
+| 本地覆盖（可选） | `~/.jobpilot/sites/`；大多数站不需要 |
 
 `JOBPILOT_HOME` 可以改数据目录。
 

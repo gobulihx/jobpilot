@@ -220,13 +220,17 @@ class CdpBackend:
 
     def _pick_date(self, action):
         el = self._locator(action)
-        el.click()
         text = str(action["value"])
-        try:
+        readonly = el.evaluate("e => e.readOnly || e.getAttribute('readonly') !== null")
+        el.click()
+        if readonly:
             self.page.get_by_text(text, exact=True).last.click()
-        except Exception:  # noqa: BLE001
+            return
+        try:
             el.fill(text)
             self.page.keyboard.press("Tab")
+        except Exception:  # noqa: BLE001
+            self.page.get_by_text(text, exact=True).last.click()
 
     def _pick_cascade(self, action):
         el = self._locator(action)

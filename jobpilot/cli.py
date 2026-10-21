@@ -446,7 +446,7 @@ def cmd_demo(args) -> int:
     fixture = ROOT_DIR / "tests" / "fixtures" / "element-ui.form.json"
     form = formmodel.normalize(json.loads(fixture.read_text(encoding="utf-8")))
     vals = home.read_json(_values_path(), values_mod.empty())
-    card = sitecards.load("element-ui")
+    card = sitecards.load("_generic")
     compiled = plan_mod.compile_plan(form, vals, card, run_id="demo")
     out = home.run_dir("demo") / "fill-plan.json"
     home.write_json(out, compiled)

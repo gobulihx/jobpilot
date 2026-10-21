@@ -1,74 +1,54 @@
-# 站点卡规范
+# 本地覆盖（可选）
 
-站点卡**不是公司白名单**。它只描述两件代码猜不到的事：
+**默认不需要。** 字段匹配靠字段表，怪行为靠通用规则。只有某个站的标签或按钮
+特别怪，才在本机写一张覆盖。
 
-1. **字段写法不一样**：这个站把「最高学历学校」写成什么标签，对应哪个 canonical 字段。
-2. **行为不一样**：必须真实键盘输入、保存报假错、上一步回退空白、日期只能点面板。
+## 什么时候写
 
-字段的通用匹配由 `jobpilot/schema.py` 的标签与别名负责，**不需要站点卡**。
+- 页面标签和字段表差太远，自动匹配认不出来。
+- 按钮文案很怪，找不到保存/提交。
+- 某个站有独特的多步结构，需要固定 URL 或字段映射。
 
-## 只公开平台/框架卡
+## 放哪
 
-| 层 | 放哪 | 进仓库吗 |
-|---|---|---|
-| `_generic.json` | 仓库 | 是 |
-| `ats/*.json`（Element UI、智联这类平台/框架） | 仓库 | 是 |
-| 公司专属卡 | `~/.jobpilot/sites/<域名>.json` | **否** |
+```
+~/.jobpilot/sites/<域名>.json
+```
 
-原因：公司站改版快，一张卡只对一家有效。堆在仓库里会变成过期文件集合，
-也会让人误以为「这个工具只支持这几家公司」。本地卡优先级最高，随时可改。
+不随仓库分发。仓库里只有模板 `sitecards/sites/_template.json`。
 
-## 结构
+## 怎么写
+
+```bash
+cp ~/.claude/skills/jobpilot/sitecards/sites/_template.json \
+   ~/.jobpilot/sites/my-bank.json
+```
+
+只填你真正需要的部分：
 
 ```json
 {
   "schema_version": 1,
   "id": "my-bank",
-  "kind": "site",
-  "match": {
-    "url_patterns": ["my-bank.example"],
-    "widgets": [],
-    "hints": ["这家银行的校招站"]
-  },
-  "fields": {
-    "页面上的奇怪标签": "education.0.school"
-  },
-  "quirks": {
-    "real_keys": true,
-    "false_save_error": "保存按钮报的那句话",
-    "back_blank": true,
-    "readonly_date": false
-  },
-  "save": {"enabled": true, "hints": ["保存"]},
-  "submit": {"enabled": false, "hints": ["提交"]}
+  "match": {"url_patterns": ["my-bank.example"]},
+  "fields": {"页面上的怪标签": "education.0.school"},
+  "save": {"hints": ["暂存"]},
+  "submit": {"hints": ["确认投递"]}
 }
 ```
 
-## 字段说明
+其余键会从默认值继承。
 
-| 键 | 作用 |
-|---|---|
-| `match.url_patterns` | URL 包含即命中，命中越多优先级越高 |
-| `match.widgets` | 页面框架特征，probe 时可采集 |
-| `fields` | 页面标签（归一化后）→ canonical id；置信度 0.99 |
-| `quirks.real_keys` | 必须真实键盘输入 |
-| `quirks.false_save_error` | 假报错文案，出现不代表失败 |
-| `quirks.back_blank` | 上一步回退会显示空白 |
-| `quirks.readonly_date` | 日期只能点面板 |
-| `submit.enabled` | 是否允许自动点到提交按钮（默认 false） |
+## 不需要写进卡里的事
 
-## 怎么写一张本地卡
+这些已经在内核里，所有站通用：
 
-```bash
-cp ~/.claude/skills/jobpilot/sitecards/sites/_template.json \
-   ~/.jobpilot/sites/my-bank.json
-# 改 id、url_patterns、fields、quirks
-python3 ~/.claude/skills/jobpilot/bin/jobpilot cards validate
-```
+- 真实键盘输入（不用 JS 直接赋值）
+- 保存后回读核对（不信弹窗）
+- 不点「上一步」，用刷新重进
+- 日期只读就点面板
+- 提交前必须用户确认
 
 ## 红线
 
-- 不写账号、密码、cookie、token。
-- 不写真实个人信息。
-- 不放绕过验证码或反自动化的逻辑。
-- 公开 PR 只收平台/框架卡，并附脱敏夹具。
+不写账号、密码、cookie、token；不写真实个人信息；不做绕过验证码的逻辑。

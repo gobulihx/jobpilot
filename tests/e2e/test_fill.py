@@ -101,7 +101,7 @@ class FillE2ETest(unittest.TestCase):
         js = (ROOT / "runner" / "probe.js").read_text(encoding="utf-8")
         form = formmodel.normalize(self.page.evaluate(js))
         vals = profile._seed_values(profile.DEMO_PROFILE)
-        compiled = plan.compile_plan(form, vals, sitecards.load("element-ui"))
+        compiled = plan.compile_plan(form, vals, sitecards.load("_generic"))
         self.assertEqual(compiled["stats"]["actions"], 3)
 
         backend = CdpBackend(page=self.page)

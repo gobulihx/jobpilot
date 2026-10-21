@@ -7,7 +7,7 @@ from jobpilot import formmodel, plan, profile, sitecards, values
 FIX = Path(__file__).resolve().parent.parent / "fixtures" / "element-ui.form.json"
 
 
-def build(vals=None, card="element-ui", form=None, **kw):
+def build(vals=None, card="_generic", form=None, **kw):
     raw = json.loads(FIX.read_text(encoding="utf-8")) if form is None else form
     form = formmodel.normalize(raw)
     vals = vals or profile._seed_values(profile.DEMO_PROFILE)
@@ -19,7 +19,7 @@ class PlanTest(unittest.TestCase):
         p = build()
         self.assertEqual(p["stats"]["actions"], 11)
         self.assertEqual(p["stats"]["unmapped"], 2)
-        self.assertEqual(p["guards"]["submit"], "confirm")
+        self.assertEqual(p["guards"]["submit"], "blocked")
         self.assertEqual(p["dom_fingerprint"], build()["dom_fingerprint"])
 
     def test_every_action_has_source(self):

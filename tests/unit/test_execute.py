@@ -12,7 +12,7 @@ FIX = Path(__file__).resolve().parent.parent / "fixtures" / "element-ui.form.jso
 def make_plan(vals=None):
     form = formmodel.normalize(json.loads(FIX.read_text(encoding="utf-8")))
     vals = vals or profile._seed_values(profile.DEMO_PROFILE)
-    return plan.compile_plan(form, vals, sitecards.load("element-ui")), vals
+    return plan.compile_plan(form, vals, sitecards.load("_generic")), vals
 
 
 class ExecuteTest(unittest.TestCase):
@@ -27,7 +27,7 @@ class ExecuteTest(unittest.TestCase):
     def test_dry_run_does_not_save(self):
         p, vals = make_plan()
         p = plan.compile_plan(formmodel.normalize(json.loads(FIX.read_text(encoding="utf-8"))),
-                              vals, sitecards.load("element-ui"), save=True)
+                              vals, sitecards.load("_generic"), save=True)
         backend = FakeBackend()
         run_plan(p, vals, backend, dry_run=True)
         self.assertFalse(any(item["op"] == "save_draft" for item in backend.log))
@@ -68,7 +68,7 @@ class ExecuteTest(unittest.TestCase):
                "controls": [{"label": "是否服从调剂", "kind": "bool", "required": True}]}
         vals = profile._seed_values(profile.DEMO_PROFILE)
         values.set_value(vals, "intent.adjust", "是", type_="bool")
-        p = plan.compile_plan(_fm.normalize(raw), vals, _sc.load("element-ui"))
+        p = plan.compile_plan(_fm.normalize(raw), vals, _sc.load("_generic"))
         result = run_plan(p, vals, FakeBackend())
         self.assertTrue(result["ok"], result["failed"])
 
