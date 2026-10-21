@@ -327,7 +327,7 @@ def _walk(obj, prefix=""):
             yield from _walk(v, f"{prefix}.{i}")
 
 
-def flat(values: dict, mask: bool = False) -> list[dict]:
+def flat(values: dict, mask: bool = False, include_prefs: bool = False) -> list[dict]:
     """按页面顺序用的扁平列表：path / label / value / sensitive。"""
     from .privacy import mask as mask_value
 
@@ -343,6 +343,8 @@ def flat(values: dict, mask: bool = False) -> list[dict]:
             val = "、".join(str(x) for x in val)
         if mask and (f and f.sensitive or (isinstance(val, str) and _looks_sensitive(val))):
             val = mask_value(val)
+        if not include_prefs and path.startswith("prefs."):
+            continue
         rows.append({
             "path": path,
             "label": f.label if f else label_of(values, path),

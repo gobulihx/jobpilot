@@ -103,7 +103,7 @@ def cmd_init(args) -> int:
 def cmd_values(args) -> int:
     vals = home.read_json(_values_path(), values_mod.empty()) or values_mod.empty()
     if args.action == "show":
-        for row in values_mod.flat(vals, mask=not args.no_mask):
+        for row in values_mod.flat(vals, mask=not args.no_mask, include_prefs=args.all):
             _print(f"{row['label']}：{row['value']}")
         return 0
     if args.action == "missing":
@@ -592,6 +592,7 @@ def build_parser() -> argparse.ArgumentParser:
     v.add_argument("value", nargs="?")
     v.add_argument("--file")
     v.add_argument("--no-mask", action="store_true")
+    v.add_argument("--all", action="store_true", help="连内部偏好一起显示")
     v.set_defaults(func=cmd_values)
 
     pr = sub.add_parser("probe", help="认页面上的字段")
