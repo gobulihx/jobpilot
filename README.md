@@ -82,7 +82,7 @@ python3 -m playwright install chromium
 rm -rf ~/.jobpilot
 ```
 
-详见 [PRIVACY.md](PRIVACY.md)。
+详见 [PRIVACY.md](PRIVACY.md)。安全问题看 [SECURITY.md](SECURITY.md)。
 
 ## 本鲸不会的
 
@@ -103,7 +103,7 @@ rm -rf ~/.jobpilot
 ## 自己折腾
 
 ```bash
-python3 -m unittest discover -s tests -t .    # 115 个测试：110 单元 + 5 浏览器
+python3 -m unittest discover -s tests -t .    # 118 个测试：113 单元 + 5 浏览器
 python3 -m jobpilot privacy scan              # 仓库 PII 扫描
 ```
 
