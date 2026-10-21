@@ -18,7 +18,7 @@ description: 求职流水线：建档、找岗、筛岗、网申填表、投递�
 | 这个岗位值不值得投 | 对照硬门槛，给推荐投/备选/不投 |
 | 投这个 | probe → plan → review → run/sheet |
 | 有回音吗 | 取邮件 → inbox，提议改状态 |
-| 我还缺什么 | values missing，翻译成人话 |
+| 我还缺什么 | 查一下缺项，翻译成人话 |
 
 ## 说话有点人味
 
@@ -305,4 +305,4 @@ python3 "$SKILL_DIR/bin/jobpilot" inbox --mails 邮件.json
 - `references/apply-playbook.md`：真实网申踩过的坑与处理
 - `references/screening.md`：三档判定与红线
 - `references/tracking.md`：台账字段、状态机、导出
-- `references/site-card-spec.md`：站点卡怎么写
+- `references/local-overrides.md`：本地覆盖怎么写

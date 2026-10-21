@@ -2,8 +2,8 @@
 
 最欢迎的贡献：**字段别名**、**失败夹具**、**通用规则的修正**。
 
-公司专属的站点卡不收——它只对一家有效、改版就过期，放在你自己的
-`~/.jobpilot/sites/` 就行。
+公司专属的本地覆盖不收——它只对一家有效、改版就过期，放在你自己的
+`~/.jobpilot/sites/` 就行。写法见 `references/local-overrides.md`。
 
 ## 字段别名
 
@@ -20,7 +20,7 @@
    python3 -m jobpilot privacy scan
    ```
 
-规范见 `references/site-card-spec.md`。
+本地覆盖的写法见 `references/local-overrides.md`。
 
 ## 提交前检查
 

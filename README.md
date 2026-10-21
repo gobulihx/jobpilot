@@ -108,7 +108,7 @@ rm -rf ~/.jobpilot
 ## 想帮忙？
 
 最欢迎：**字段别名**、**脱敏的失败页面**、**通用规则的修正**。
-公司专属的站点卡不用提交，放你自己 `~/.jobpilot/sites/` 就行。
+公司专属的本地覆盖不用提交，放你自己 `~/.jobpilot/sites/` 就行。
 
 见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
