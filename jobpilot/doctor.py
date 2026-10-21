@@ -16,6 +16,12 @@ def _module(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
 
+def _browser_ready() -> bool:
+    """装没装 playwright 和浏览器能不能起来，是两件事。"""
+    from . import browser
+    return browser.ready()
+
+
 def _port_open(port: int, host: str = "127.0.0.1") -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(0.3)
@@ -32,8 +38,10 @@ def capabilities() -> dict:
         "home": str(root),
         "home_writable": writable,
         "xlsx": _module("openpyxl"),
-        "browser": _module("playwright"),
+        "browser_installed": _module("playwright"),
+        "browser_ready": _browser_ready(),
         "cdp_9222": _port_open(9222),
+        "search": "由助手判断",
         "node": shutil.which("node") or "",
         "sitecards": len(cards),
     }
@@ -41,15 +49,18 @@ def capabilities() -> dict:
 
 def summary(caps: dict) -> list[str]:
     lines = []
-    if caps["browser"] and caps["cdp_9222"]:
-        lines.append("自动填表：能用（浏览器已接上）。")
-    elif caps["browser"]:
-        lines.append("自动填表：能装，但没连上 Chrome。打开调试口，或者人家给你填写稿。")
+    if caps["cdp_9222"]:
+        lines.append("自动填表：能用（连你正开着的 Chrome，填完不关页面）。")
+    elif caps.get("browser_ready"):
+        lines.append("自动填表：能用（会自己开一个专用浏览器，填完留着给你看）。")
+    elif caps.get("browser_installed"):
+        lines.append("自动填表：组件装了一半，还差浏览器本体。下面的命令能补齐；不装也能生成填写稿。")
     else:
         lines.append("自动填表：还没准备。想用就装一下，不想装也能生成填写稿。")
     lines.append("表格导出：" + ("能用" if caps["xlsx"] else "先用 csv，装上表格组件后可以导出 Excel。"))
     lines.append(f"数据目录：{caps['home']}（{'可写' if caps['home_writable'] else '不可写'}）")
     lines.append(f"站点卡：{caps['sitecards']} 张")
+    lines.append("搜索：看助手手上有没有搜索工具；有就直接用，没有就只读你给的链接。")
     return lines
 
 

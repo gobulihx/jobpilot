@@ -26,9 +26,6 @@ git clone https://github.com/gobulihx/jobpilot ~/.claude/skills/jobpilot
 cd ~/.claude/skills/jobpilot
 ./bin/jobpilot doctor      # 看看现在能做什么
 ./bin/jobpilot init        # 4 轮，每轮 3 个问题
-# 或者在 Claude Code 里让它问，再执行：
-# ./bin/jobpilot init --questions
-# ./bin/jobpilot init --answers answers.json
 ./bin/jobpilot demo        # 用演示数据跑一遍完整流程
 ```
 
@@ -56,17 +53,25 @@ probe     match      plan      review   run     verify   ledger
 | 邮箱 | 扫回执、提议改状态 | 每周手动导出一次 |
 | openpyxl | 导出 xlsx | 导出 csv |
 
+**装了就会自己用，不用额外配置。**
+
+- 先连你已经开着的 Chrome（调试口 9222）；
+- 连不上就自己开一个专用浏览器，第一次登录一次，之后记住；
+- 填完**不关页面**，留给你核对，自己点提交。
+
 ```bash
-# 想自动填表，再装两步（可选）
 python3 -m pip install playwright
 python3 -m playwright install chromium
 ```
 
-或者用已经开着的 Chrome：
+也可以手动开调试口，让它直接用你日常的 Chrome：
 
 ```bash
 open -na "Google Chrome" --args --remote-debugging-port=9222
 ```
+
+**搜索工具**（exa / DeepSeek Web）由助手在对话里判断：装了就直接搜，没装就只读你给的链接。
+CLI 本身不联网搜索，也不检测你装了哪个搜索工具。
 
 ## 隐私
 

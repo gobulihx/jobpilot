@@ -52,7 +52,7 @@ def cmd_doctor(args) -> int:
     else:
         for line in info["summary"]:
             _print(line)
-        if not info["capabilities"]["browser"]:
+        if not info["capabilities"].get("browser_ready"):
             _print("")
             _print(doctor.install_hint())
     return 0
@@ -146,11 +146,11 @@ def cmd_probe(args) -> int:
             backend.fresh(args.url)
             raw = backend.page.evaluate(probe_js)
         finally:
-            backend.close_page()
             backend.close()
         form = formmodel.normalize(raw)
         home.write_json(out, form)
         _print(f"认出了 {len(form['controls'])} 个字段，放在 {out}")
+        _print("页面给你留着了，你可以对照看看。")
         return 0
     _print("给一个页面文件（--fixture）或网址（--url）")
     return 2
@@ -241,6 +241,7 @@ def cmd_run(args) -> int:
             out = home.run_dir(compiled["run_id"]) / "results.json"
             home.write_json(out, {"result": result, "verify": recon})
             _print(f"填了 {result['done']} 项，回读核对 {recon['pass']}/{recon['checked']}。")
+            _print("页面没关，你看一眼填得怎么样，没问题再自己点提交。")
             if recon["missing"] or recon["mismatch"]:
                 _print(humanize.say("save_check"))
         finally:
@@ -430,8 +431,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     i = sub.add_parser("init", help="建档案（12 个字段）")
     i.add_argument("--demo", action="store_true")
-    i.add_argument("--answers")
-    i.add_argument("--questions", action="store_true")
+    i.add_argument("--answers", help="（助手用）从 JSON 导入答案")
+    i.add_argument("--questions", action="store_true", help="（助手用）输出 12 个问题")
     i.set_defaults(func=cmd_init)
 
     v = sub.add_parser("values", help="看/补字段")

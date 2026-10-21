@@ -1,24 +1,51 @@
-"""真实浏览器执行器：连上已开调试口的 Chrome，用真实键盘事件填表。
+"""真实浏览器执行器：优先连你已经开着的 Chrome；没有就自己开一个专用浏览器。
 
-只在装了 playwright 且能连上浏览器时可用；否则由 CLI 降级到填写稿。
+填完**不关页面**——用户要看一眼填得怎么样。专用浏览器的登录状态会保留在
+~/.jobpilot/browser，下次不用重新登录。
 """
 
 from __future__ import annotations
 
+import os
+import socket
+import subprocess
 import time
 from pathlib import Path
+
+from ..browser import find_executable
+
+DEFAULT_PORT = 9222
 
 
 class BrowserUnavailable(Exception):
     pass
 
 
+def _port_open(port: int, host: str = "127.0.0.1") -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.3)
+        return s.connect_ex((host, port)) == 0
+
+
+def _profile_dir() -> Path:
+    root = Path(os.environ.get("JOBPILOT_HOME", "~/.jobpilot")).expanduser()
+    path = root / "browser"
+    path.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(path, 0o700)
+    except OSError:
+        pass
+    return path
+
+
 class CdpBackend:
     name = "cdp"
 
-    def __init__(self, endpoint: str = "http://127.0.0.1:9222", delay_ms: int = 20, page=None):
+    def __init__(self, endpoint: str = f"http://127.0.0.1:{DEFAULT_PORT}",
+                 delay_ms: int = 20, page=None):
         self._pw = None
         self.browser = None
+        self._port = int(endpoint.rsplit(":", 1)[-1])
         self.delay_ms = delay_ms
         if page is not None:
             # 测试或调用方给现成页面时，不再自己连浏览器
@@ -28,16 +55,58 @@ class CdpBackend:
             from playwright.sync_api import sync_playwright  # type: ignore
         except ImportError as exc:
             raise BrowserUnavailable("browser_missing") from exc
+
         self._pw = sync_playwright().start()
         try:
-            self.browser = self._pw.chromium.connect_over_cdp(endpoint)
+            self.browser = self._connect_or_launch(endpoint)
         except Exception as exc:  # noqa: BLE001
             self._pw.stop()
+            self._pw = None
             raise BrowserUnavailable("browser_missing") from exc
+
         contexts = self.browser.contexts
         self.context = contexts[0] if contexts else self.browser.new_context()
         pages = self.context.pages
         self.page = pages[-1] if pages else self.context.new_page()
+
+    # ---- 连接或启动 -------------------------------------------------------
+    def _connect_or_launch(self, endpoint: str):
+        try:
+            return self._pw.chromium.connect_over_cdp(endpoint)
+        except Exception:  # noqa: BLE001
+            pass
+
+        port = self._port
+        if _port_open(port):
+            port = port + 1 if port < 9229 else port
+        self._launch_detached(port)
+        for _ in range(60):
+            if _port_open(port):
+                break
+            time.sleep(0.25)
+        else:
+            raise RuntimeError("browser did not start")
+        self._port = port
+        return self._pw.chromium.connect_over_cdp(f"http://127.0.0.1:{port}")
+
+    def _launch_detached(self, port: int):
+        exe = find_executable(self._pw)
+        if not exe:
+            raise RuntimeError("no browser binary")
+        args = [
+            exe,
+            f"--remote-debugging-port={port}",
+            f"--user-data-dir={_profile_dir()}",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "about:blank",
+        ]
+        subprocess.Popen(
+            args,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
 
     # ---- 页面 -------------------------------------------------------------
     def use(self, url: str):
@@ -54,12 +123,13 @@ class CdpBackend:
         self.page.wait_for_load_state("domcontentloaded")
 
     def fresh(self, url: str):
-        """探测专用：新开一个标签页，不碰用户当前的页面。"""
+        """探测：新开一个标签页，不碰用户手上正在填的页面。"""
         self.page = self.context.new_page()
         self.page.goto(url)
         self.page.wait_for_load_state("domcontentloaded")
 
     def close_page(self):
+        """只在明确需要时关页面；默认不关。"""
         try:
             self.page.close()
         except Exception:  # noqa: BLE001
@@ -178,10 +248,10 @@ class CdpBackend:
         return self._read()
 
     def close(self):
+        """只断开自动化连接，不关浏览器、不关页面——用户还要看。"""
         if self._pw is None:
             return
         try:
-            if self.browser:
-                self.browser.close()
-        finally:
             self._pw.stop()
+        finally:
+            self._pw = None
