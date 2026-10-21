@@ -22,6 +22,21 @@ def _type_hint(item: dict) -> str:
     return hints.get(item.get("type", ""), "")
 
 
+def _reason(item: dict) -> str:
+    text = str(item.get("reason", ""))
+    if text == "缺值":
+        return "还没填"
+    if text.startswith("选项里没有"):
+        return text.replace("选项里没有", "页面选项里没有", 1)
+    if text.startswith("找不到文件"):
+        return "文件没找到，检查一下路径"
+    if text == "匹配把握不大":
+        return "人家拿不准对应哪一项"
+    if text == "页面上没有标签":
+        return "页面上没写这个框叫什么"
+    return text
+
+
 def _section(lines: list[str], title: str, items: list[dict], limit: int | None = None,
              footer: str = "") -> None:
     if not items:
@@ -45,7 +60,7 @@ def _section(lines: list[str], title: str, items: list[dict], limit: int | None 
                 shown = "、".join(str(x) for x in options[:6])
                 more = " 等" if len(options) > 6 else ""
                 suggest += f"；可选：{shown}{more}"
-            lines.append(f"  · {u['label']}{hint}：{u['reason']}{suggest}")
+            lines.append(f"  · {u['label']}{hint}：{_reason(u)}{suggest}")
             shown += 1
     if limit is not None and len(items) > limit:
         lines.append(f"  ……还有 {len(items) - limit} 项")

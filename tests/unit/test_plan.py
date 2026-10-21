@@ -194,6 +194,15 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(act["op"], "select")
         self.assertEqual(act["value"], "是")
 
+    def test_reason_is_human(self):
+        from jobpilot import review
+        raw = {"url": "x", "module": "基本信息",
+               "controls": [{"label": "身高（cm）", "kind": "number", "required": True}]}
+        p = build(form=raw)
+        text = review.render(p)
+        self.assertIn("还没填", text)
+        self.assertNotIn("缺值", text)
+
     def test_empty_page_message(self):
         from jobpilot import review
         raw = {"url": "x", "module": "基本信息", "controls": []}
