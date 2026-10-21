@@ -1,36 +1,41 @@
 # 站点卡规范
 
-一张卡描述「这个站怎么填」。按 ATS 归类，不按公司归类。
+站点卡**不是公司白名单**。它只描述两件代码猜不到的事：
 
-## 分层
+1. **字段写法不一样**：这个站把「最高学历学校」写成什么标签，对应哪个 canonical 字段。
+2. **行为不一样**：必须真实键盘输入、保存报假错、上一步回退空白、日期只能点面板。
 
-```
-_generic.json        默认值
-ats/element-ui.json  一类框架的共性
-sites/nbcb.json      单个站的特例（覆盖前两层）
-```
+字段的通用匹配由 `jobpilot/schema.py` 的标签与别名负责，**不需要站点卡**。
 
-加载顺序：generic → ats → site，后者覆盖前者。
+## 只公开平台/框架卡
+
+| 层 | 放哪 | 进仓库吗 |
+|---|---|---|
+| `_generic.json` | 仓库 | 是 |
+| `ats/*.json`（Element UI、智联这类平台/框架） | 仓库 | 是 |
+| 公司专属卡 | `~/.jobpilot/sites/<域名>.json` | **否** |
+
+原因：公司站改版快，一张卡只对一家有效。堆在仓库里会变成过期文件集合，
+也会让人误以为「这个工具只支持这几家公司」。本地卡优先级最高，随时可改。
 
 ## 结构
 
 ```json
 {
   "schema_version": 1,
-  "id": "nbcb",
+  "id": "my-bank",
   "kind": "site",
   "match": {
-    "url_patterns": ["zhaopin.nbcb.com.cn"],
-    "widgets": ["el-form", "el-select"],
-    "hints": ["宁波银行校园招聘"]
+    "url_patterns": ["my-bank.example"],
+    "widgets": [],
+    "hints": ["这家银行的校招站"]
   },
   "fields": {
-    "学校名称（限20字）": "education.0.school",
-    "应聘理由": "narratives.why_company"
+    "页面上的奇怪标签": "education.0.school"
   },
   "quirks": {
     "real_keys": true,
-    "false_save_error": "commitOthers is not a function",
+    "false_save_error": "保存按钮报的那句话",
     "back_blank": true,
     "readonly_date": false
   },
@@ -52,9 +57,18 @@ sites/nbcb.json      单个站的特例（覆盖前两层）
 | `quirks.readonly_date` | 日期只能点面板 |
 | `submit.enabled` | 是否允许自动点到提交按钮（默认 false） |
 
+## 怎么写一张本地卡
+
+```bash
+cp ~/.claude/skills/jobpilot/sitecards/sites/_template.json \
+   ~/.jobpilot/sites/my-bank.json
+# 改 id、url_patterns、fields、quirks
+python3 ~/.claude/skills/jobpilot/bin/jobpilot cards validate
+```
+
 ## 红线
 
 - 不写账号、密码、cookie、token。
 - 不写真实个人信息。
 - 不放绕过验证码或反自动化的逻辑。
-- 一个 PR 一张卡，附脱敏夹具。
+- 公开 PR 只收平台/框架卡，并附脱敏夹具。

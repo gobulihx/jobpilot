@@ -37,15 +37,22 @@ def load(card_id: str = "_generic", extra_dir: Path | None = None) -> dict:
     return card
 
 
+def _card_dirs(extra_dir: Path | None) -> list[Path]:
+    dirs = [CARD_DIR / "ats"]
+    if extra_dir:
+        dirs.append(Path(extra_dir))
+    dirs.append(CARD_DIR / "sites")
+    return [d for d in dirs if d.exists()]
+
+
 def detect(url: str, widgets: list[str] | None = None, extra_dir: Path | None = None) -> str:
-    """按 URL 与控件特征挑一张卡；挑不到用 _generic。"""
+    """按 URL 与控件特征挑一张卡；挑不到用 _generic。本地卡优先。"""
     widgets = widgets or []
     candidates = []
-    for sub in ("ats", "sites"):
-        base = Path(extra_dir) if (sub == "sites" and extra_dir) else CARD_DIR / sub
-        if not base.exists():
-            continue
+    for order, base in enumerate(_card_dirs(extra_dir)):
         for p in base.glob("*.json"):
+            if p.stem.startswith("_"):
+                continue
             card = _read(p)
             score = 0
             patterns = card.get("match", {}).get("url_patterns", [])
@@ -56,11 +63,25 @@ def detect(url: str, widgets: list[str] | None = None, extra_dir: Path | None = 
                 if w in widgets:
                     score += 1
             if score:
-                candidates.append((score, p.stem))
+                candidates.append((score, -order, p.stem))
     if not candidates:
         return "_generic"
     candidates.sort(reverse=True)
-    return candidates[0][1]
+    return candidates[0][2]
+
+
+def all_cards(extra_dir: Path | None = None) -> list[tuple[str, dict]]:
+    """内置 + 本地，用于 list/validate。"""
+    out = []
+    for base in [CARD_DIR / "ats", CARD_DIR / "sites"] + ([Path(extra_dir)] if extra_dir else []):
+        if not base or not base.exists():
+            continue
+        for p in sorted(base.glob("*.json")):
+            if p.stem.startswith("_"):
+                continue
+            out.append((p.relative_to(CARD_DIR).as_posix() if p.is_relative_to(CARD_DIR)
+                        else str(p), _read(p)))
+    return out
 
 
 def validate(card: dict) -> list[str]:

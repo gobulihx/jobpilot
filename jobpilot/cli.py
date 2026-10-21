@@ -165,9 +165,11 @@ def cmd_plan(args) -> int:
     form = formmodel.normalize(form)
     vals = _load_json_arg(args.values) if args.values else (
         home.read_json(_values_path(), values_mod.empty()) or values_mod.empty())
+    user_cards = home.home() / "sites"
     card_id = args.card or sitecards.detect(
-        form.get("url", ""), [c.get("widget", "") for c in form["controls"]])
-    card = sitecards.load(card_id)
+        form.get("url", ""), [c.get("widget", "") for c in form["controls"]],
+        extra_dir=user_cards)
+    card = sitecards.load(card_id, extra_dir=user_cards)
     compiled = plan_mod.compile_plan(form, vals, card, module=args.module, save=args.save)
     run_id = compiled["run_id"]
     out = Path(args.out).expanduser() if args.out else home.run_dir(run_id) / "fill-plan.json"
@@ -379,18 +381,20 @@ def cmd_privacy(args) -> int:
 
 
 def cmd_cards(args) -> int:
-    base = ROOT_DIR / "sitecards"
+    user_cards = home.home() / "sites"
+    cards = sitecards.all_cards(extra_dir=user_cards)
     if args.action == "list":
-        for p in sorted(base.rglob("*.json")):
-            _print(p.relative_to(base).as_posix())
+        for name, _ in cards:
+            _print(name)
+        if not user_cards.exists():
+            _print("\n本地卡目录还没建：~/.jobpilot/sites/（公司专属的卡放这里）")
         return 0
     problems = 0
-    for p in sorted(base.rglob("*.json")):
-        card = json.loads(p.read_text(encoding="utf-8"))
+    for name, card in cards:
         issues = sitecards.validate(card)
         if issues:
             problems += 1
-            _print(f"{p.name}: {'；'.join(issues)}")
+            _print(f"{name}: {'；'.join(issues)}")
     _print("全部合格。" if not problems else f"{problems} 张需要改。")
     return 0 if not problems else 1
 

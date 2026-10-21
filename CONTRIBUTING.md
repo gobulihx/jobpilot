@@ -1,10 +1,13 @@
 # 贡献
 
-最欢迎的两类贡献：**站点卡**和**失败夹具**。
+最欢迎的两类贡献：**平台/框架级站点卡**和**失败夹具**。
+
+公司专属的卡不收——它只对一家有效、改版就过期，放在你自己的
+`~/.jobpilot/sites/` 就行。公开仓库只收 Element UI、智联这类平台/框架层的共性。
 
 ## 站点卡
 
-1. 复制 `sitecards/sites/nbcb.json`，改名成你的站。
+1. 复制 `sitecards/sites/_template.json`，改名成你的站。
 2. 填 `match.url_patterns`、字段映射、quirks。
 3. 附一个脱敏的页面夹具到 `fixtures/`（把真实姓名换成「张三」，公司名换掉）。
 4. 跑：
@@ -15,7 +18,7 @@
    python3 -m jobpilot privacy scan
    ```
 
-5. 一个 PR 只加一张卡。
+5. 一个 PR 只加一张卡，且必须是平台/框架级。
 
 规范见 `references/site-card-spec.md`。
 

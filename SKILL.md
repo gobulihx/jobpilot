@@ -112,6 +112,7 @@ python3 "$SKILL_DIR/bin/jobpilot" sheet 计划.json
 第一次自动开专用浏览器时，让用户登录一次，之后会记住。
 
 站点知识见 `references/apply-playbook.md` 和 `references/site-card-spec.md`。
+**公司专属的卡只写本地**（`~/.jobpilot/sites/<域名>.json`），不要提交进仓库。
 
 ### 四、记账
 
@@ -165,7 +166,7 @@ python3 "$SKILL_DIR/bin/jobpilot" inbox --mails 邮件.json
 | 台账 | `~/.jobpilot/ledger.db` |
 | 每次运行的计划与截图 | `~/.jobpilot/runs/<run_id>/`（700） |
 | 导出 | `~/.jobpilot/exports/` |
-| 站点卡 | 仓库 `sitecards/` + `~/.jobpilot/sites/` |
+| 站点卡 | 仓库 `sitecards/`（平台/框架级）+ `~/.jobpilot/sites/`（公司专属，本地优先） |
 
 `JOBPILOT_HOME` 可以改数据目录。
 
