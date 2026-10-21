@@ -48,6 +48,7 @@ jobs:
       - run: |
           export JOBPILOT_HOME=$(mktemp -d)
           python -m jobpilot init --demo
+          export JOBPILOT_HOME=$(mktemp -d)
           python -m jobpilot demo
           python -m jobpilot ledger list
 

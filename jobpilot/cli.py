@@ -78,8 +78,8 @@ def cmd_init(args) -> int:
         return 0
     if args.demo:
         if (home.home() / "profile.json").exists() and not args.force:
-            _print("你已经有档案了，演示会覆盖它。想看演示就换个空目录：")
-            _print("  JOBPILOT_HOME=$(mktemp -d) jobpilot demo")
+            _print("你已经有档案了，演示会覆盖它。先换一个空目录再跑：")
+            _print("  export JOBPILOT_HOME=$(mktemp -d)")
             return 2
         created = profile.create(demo=True)
         _print("演示档案建好了：示例大学，金融科技，硕士。")
@@ -592,8 +592,8 @@ def cmd_cards(args) -> int:
 # --------------------------------------------------------------------------- demo
 def cmd_demo(args) -> int:
     if (home.home() / "profile.json").exists():
-        _print("你已经有档案了，演示会盖掉它。换个空目录再跑：")
-        _print("  JOBPILOT_HOME=$(mktemp -d) jobpilot demo")
+        _print("你已经有档案了，演示会盖掉它。先换一个空目录再跑：")
+        _print("  export JOBPILOT_HOME=$(mktemp -d)")
         return 2
     home.ensure_layout()
     profile.create(demo=True, full=True)
