@@ -144,8 +144,23 @@ def evaluate(candidate: dict, profile: dict) -> dict:
     else:
         tier = "备选"
 
+    if tier == "不投":
+        why = fails[0] if fails else ""
+    elif tier == "备选":
+        if unknown:
+            why = "缺数据：" + "、".join(dict.fromkeys(unknown))
+        elif not major_ok:
+            why = "专业不完全对口"
+        elif not city_ok:
+            why = "城市不在你的意向里"
+        else:
+            why = "有不确定项"
+    else:
+        why = ""
+
     return {
         "tier": tier,
+        "why": why,
         "reasons": reasons,
         "fails": fails,
         "unknown": list(dict.fromkeys(unknown)),

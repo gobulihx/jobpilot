@@ -51,14 +51,14 @@ _RAW = [
     ("person.photo", "证件照", "file", "person", ("照片", "免冠照片"), False, None, False),
     ("person.english_level", "英语水平", "enum", "person", ("英语等级", "外语水平", "英语"), False, None, True),
     # 二、联系方式
-    ("contact.phone", "手机号码", "tel", "contact", ("手机号", "联系电话"), False, None, False),
-    ("contact.email", "电子邮箱", "email", "contact", ("邮箱",), False, None, False),
-    ("contact.wechat", "微信号", "text", "contact", ("微信",), False, None, False),
+    ("contact.phone", "手机号码", "tel", "contact", ("手机号", "联系电话"), True, None, False),
+    ("contact.email", "电子邮箱", "email", "contact", ("邮箱",), True, None, False),
+    ("contact.wechat", "微信号", "text", "contact", ("微信",), True, None, False),
     ("contact.address", "通讯地址", "text", "contact", ("家庭地址",), False, None, False),
     ("contact.postcode", "邮编", "text", "contact", ("邮政编码",), False, None, False),
     ("contact.current_address", "现居住地址", "text", "contact", (), False, None, False),
     ("contact.emergency_name", "紧急联系人姓名", "text", "contact", (), False, None, False),
-    ("contact.emergency_phone", "紧急联系人电话", "tel", "contact", (), False, None, False),
+    ("contact.emergency_phone", "紧急联系人电话", "tel", "contact", (), True, None, False),
     ("contact.emergency_relation", "紧急联系人关系", "text", "contact", (), False, None, False),
     # 三、教育（可重复）
     ("education.level", "学历层次", "enum", "education", ("学历", "最高学历", "培养层次"), False, None, True),
@@ -97,7 +97,7 @@ _RAW = [
     ("experiences.location", "工作地点", "text", "experiences", (), False, None, False),
     ("experiences.department", "部门", "text", "experiences", (), False, None, False),
     ("experiences.supervisor", "证明人姓名", "text", "experiences", (), False, None, False),
-    ("experiences.supervisor_phone", "证明人电话", "tel", "experiences", (), False, None, False),
+    ("experiences.supervisor_phone", "证明人电话", "tel", "experiences", (), True, None, False),
     ("experiences.duties", "工作内容", "long_text", "experiences", (), False, None, False),
     ("experiences.reason", "离职原因", "text", "experiences", (), False, None, False),
     # 六、家庭（可重复）
@@ -107,7 +107,7 @@ _RAW = [
     ("family.employer", "工作单位", "text", "family", (), False, None, False),
     ("family.title", "职务", "text", "family", (), False, None, False),
     ("family.politics", "政治面貌", "enum", "family", (), False, None, False),
-    ("family.phone", "联系电话", "tel", "family", (), False, None, False),
+    ("family.phone", "联系电话", "tel", "family", (), True, None, False),
     ("family.id_no", "身份证号", "text", "family", (), True, 18, False),
     # 七、奖惩（可重复）
     ("awards.name", "奖项名称", "text", "awards", ("奖励名称",), False, None, False),
@@ -156,6 +156,13 @@ FIELDS: dict[str, Field] = {
 
 REPEAT_GROUPS = ("education", "languages", "experiences", "family", "awards")
 L0: tuple[str, ...] = tuple(f.id for f in FIELDS.values() if f.l0)
+# 网申里这些字段即使页面没标星，也不该空着
+CORE_REQUIRED: frozenset[str] = frozenset({
+    "person.name", "contact.phone", "contact.email", "person.id_no",
+    "person.birth_date", "education.level", "education.school",
+    "education.major", "education.grad_date", "prefs.resume",
+})
+
 # 允许「明确回答为空」的字段（例如：没有要排除的公司）
 ALLOW_EMPTY: frozenset[str] = frozenset({"intent.exclude"})
 

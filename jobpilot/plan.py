@@ -132,7 +132,7 @@ def _build_action(control: dict, path: str, value, entry, card: dict):
 
 
 def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
-                 run_id: str | None = None, save: bool = False) -> dict:
+                 run_id: str | None = None, save: bool = True) -> dict:
     alias_index = dict(schema.alias_index())
     alias_index.update(values_mod.custom_alias_index(vals))
     skipped = values_mod.skipped(vals)
@@ -157,9 +157,10 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 continue
             m = match_control(c, card, alias_index)
             conf = m["confidence"]
+            required = bool(c.get("required")) or (m.get("canonical") in schema.CORE_REQUIRED)
             if not m["canonical"]:
                 if not c.get("label"):
-                    if c.get("required"):
+                    if required:
                         item = {"cid": c["cid"], "label": "（未命名字段）", "module": mod,
                                 "reason": "页面上没有标签", "required": True, "canonical": None}
                         unmapped.append(item)
@@ -169,9 +170,9 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 item = {
                     "cid": c["cid"], "label": c["label"], "module": mod,
                     "reason": m["reason"], "options": m.get("options", []),
-                    "required": bool(c.get("required")), "canonical": None,
+                    "required": required, "canonical": None,
                 }
-                if c.get("required"):
+                if required:
                     unmapped.append(item)
                     blocking.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                      "reason": m["reason"], "path": None})
@@ -190,11 +191,11 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 item = {
                     "cid": c["cid"], "label": c["label"], "module": mod,
                     "reason": "缺值", "canonical": path,
-                    "required": bool(c.get("required")),
+                    "required": required,
                     "type": f.type if f else "text",
                     "maxlen": f.maxlen if f else None,
                 }
-                if c.get("required"):
+                if required:
                     unmapped.append(item)
                     blocking.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                      "reason": "缺值", "path": path,
@@ -210,7 +211,7 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
             if problem:
                 problem["module"] = mod
                 unmapped.append(problem)
-                if c.get("required"):
+                if required:
                     blocking.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                      "reason": problem["reason"], "path": path})
                 continue
@@ -220,7 +221,7 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 action["needs_confirm"] = True
                 unmapped.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                  "reason": "匹配把握不大，请确认", "suggest": m["canonical"]})
-                if c.get("required"):
+                if required:
                     blocking.append({"cid": c["cid"], "label": c["label"], "module": mod,
                                      "reason": "匹配把握不大", "path": path})
             actions.append(action)
@@ -229,7 +230,7 @@ def compile_plan(form: dict, vals: dict, card: dict, module: str | None = None,
                 assertions.append({"after": action["aid"], "cid": c["cid"],
                                    "label": c["label"], "expect": action["value"]})
 
-        if save and actions:
+        if save and actions and card.get("save", {}).get("enabled", True):
             actions.append({"aid": f"save-{mod}", "op": "save_draft",
                             "target": {"module": mod},
                             "expect": card.get("quirks", {}).get("false_save_error")})
@@ -270,6 +271,9 @@ def explain(plan: dict) -> list[str]:
     for step in plan["steps"]:
         lines.append(f"[{step['module']}] {len(step['actions'])} 项")
         for a in step["actions"]:
+            if a["op"] == "save_draft":
+                lines.append("  · 保存这一页")
+                continue
             label = a["target"].get("label", a["op"])
             lines.append(f"  {label} ← {a['value_ref']}（{a['op']}）")
     for u in plan["unmapped"]:

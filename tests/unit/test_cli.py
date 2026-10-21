@@ -132,7 +132,7 @@ class CliTest(unittest.TestCase):
                      "--out", str(plan_path))
         code, out = self.run_cli("run", str(plan_path), "--backend", "fake")
         self.assertEqual(code, 0)
-        self.assertIn("停在提交前", out)
+        self.assertIn("还没保存", out)
 
     def test_set_many_rejects_bad_value(self):
         self.run_cli("init", "--demo")

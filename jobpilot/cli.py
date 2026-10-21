@@ -205,7 +205,7 @@ def cmd_plan(args) -> int:
         form.get("url", ""), [c.get("widget", "") for c in form["controls"]],
         extra_dir=user_cards)
     card = sitecards.load(card_id, extra_dir=user_cards)
-    compiled = plan_mod.compile_plan(form, vals, card, module=args.module, save=args.save)
+    compiled = plan_mod.compile_plan(form, vals, card, module=args.module, save=not args.no_save)
     run_id = compiled["run_id"]
     out = Path(args.out).expanduser() if args.out else home.run_dir(run_id) / "fill-plan.json"
     home.write_json(out, compiled)
@@ -296,8 +296,7 @@ def cmd_run(args) -> int:
             recon = verify.reconcile(compiled, readback)
             out = home.run_dir(compiled["run_id"]) / "results.json"
             home.write_json(out, {"result": result, "verify": recon})
-            _print(f"填了 {result['done']} 项，回读核对 {recon['pass']}/{recon['checked']}。")
-            _print("页面没关，你看一眼填得怎么样，没问题再自己点提交。")
+            _print(f"填了 {result['filled']} 项，回读核对 {recon['pass']}/{recon['checked']}。")
             if recon["missing"] or recon["mismatch"]:
                 _print(humanize.say("save_check"))
         finally:
@@ -310,7 +309,11 @@ def cmd_run(args) -> int:
             _print(f"  · {label}：没填上。要不要换种填法，或者你自己填？")
         _print("停在出错的地方了，改完可以接着来。")
         return 1
-    _print("都填好了，停在提交前。投完跟人家说一声，人家把这一笔记下来。")
+    if args.save_draft:
+        _print("填好并保存了。页面没关，你看一眼。")
+    else:
+        _print("值填好了，还没保存。页面没关，你看一眼，点保存或下一步。")
+    _print("确认没问题就自己点下一步/提交；投完跟人家说一声。")
     return 0
 
 
@@ -332,7 +335,9 @@ def cmd_ledger(args) -> int:
                                      args.batch or "", url=args.url or "",
                                      status=args.status or "draft",
                                      external_id=args.external_id or "")
-            _print(("新建：" if created else "已经记过，更新了一下：") + app_id)
+            action = "记下了" if created else "已经记过，更新了一下"
+            status = ledger.STATUS_LABEL.get(args.status or "draft", args.status or "draft")
+            _print(f"{action}：{args.company} · {args.position}（{status}）")
             return 0
         if args.action == "list":
             rows = db.list(args.status)
@@ -404,11 +409,12 @@ def cmd_screen(args) -> int:
     else:
         for r in results:
             _print(f"[{r['tier']}] {r.get('company', '')} · {r.get('position', '')}")
+            for f in r.get("fails", []):
+                _print(f"    × {f}")
             for reason in r["reasons"][:4]:
                 _print(f"    · {reason}")
-            if r.get("fails"):
-                for f in r["fails"]:
-                    _print(f"    × {f}")
+            if r.get("why") and r["tier"] == "备选":
+                _print(f"    为什么：{r['why']}")
     return 0
 
 
@@ -610,7 +616,7 @@ def build_parser() -> argparse.ArgumentParser:
     pl.add_argument("--card")
     pl.add_argument("--module")
     pl.add_argument("--out")
-    pl.add_argument("--save", action="store_true")
+    pl.add_argument("--no-save", action="store_true", help="不生成保存动作")
     pl.set_defaults(func=cmd_plan)
 
     rv = sub.add_parser("review", help="审阅计划")

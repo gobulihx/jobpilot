@@ -111,7 +111,7 @@ def run_plan(plan: dict, vals: dict, backend, state_path: Path | None = None,
                 failed = True
                 break
 
-            if action.get("expect", {}).get("max"):
+            if (action.get("expect") or {}).get("max"):
                 maxlen = action["expect"]["max"]
                 if isinstance(resolved.get("value"), str) and len(resolved["value"]) > maxlen:
                     results.append({"aid": aid, "ok": False,
@@ -135,6 +135,10 @@ def run_plan(plan: dict, vals: dict, backend, state_path: Path | None = None,
         if failed:
             break
 
+    fill_ids = [a["aid"] for step in plan.get("steps", []) for a in step.get("actions", [])
+                if a["op"] not in ("save_draft", "submit")]
+    filled = sum(1 for aid in fill_ids if aid in done)
+
     state["results"] = results
     if state_path:
         Path(state_path).parent.mkdir(parents=True, exist_ok=True)
@@ -143,6 +147,7 @@ def run_plan(plan: dict, vals: dict, backend, state_path: Path | None = None,
     return {
         "ok": not failed,
         "done": len(done),
+        "filled": filled,
         "failed": [r for r in results if not r.get("ok")],
         "results": results,
         "state_path": str(state_path) if state_path else "",

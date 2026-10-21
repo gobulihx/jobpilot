@@ -26,12 +26,14 @@ class PlanTest(unittest.TestCase):
         p = build()
         for step in p["steps"]:
             for a in step["actions"]:
+                if a["op"] == "save_draft":
+                    continue
                 self.assertTrue(a.get("value_ref"), a)
                 self.assertTrue(a.get("target", {}).get("cid"))
 
     def test_select_uses_option(self):
         p = build()
-        acts = [a for s in p["steps"] for a in s["actions"]]
+        acts = [a for s in p["steps"] for a in s["actions"] if a["op"] != "save_draft"]
         degree = [a for a in acts if a["target"]["label"] == "最高学历"][0]
         self.assertEqual(degree["op"], "select")
         self.assertEqual(degree["value"], "硕士")
@@ -82,7 +84,7 @@ class PlanTest(unittest.TestCase):
         entry = values.get_entry(vals, "education.0.school")
         entry["aliases"] = ["短名"]
         p = build(vals=vals)
-        acts = [a for s in p["steps"] for a in s["actions"]]
+        acts = [a for s in p["steps"] for a in s["actions"] if a["op"] != "save_draft"]
         school = [a for a in acts if a["target"]["label"] == "学校名称"][0]
         self.assertEqual(school["value"], "短名")
         self.assertTrue(any("短名" in w for w in p["warnings"]))
@@ -106,11 +108,16 @@ class PlanTest(unittest.TestCase):
         b = build(run_id="another")
         self.assertEqual(plan.plan_hash(a), plan.plan_hash(b))
 
-    def test_save_action_only_when_asked(self):
-        p = build(save=True)
+    def test_save_action_by_default(self):
+        p = build()
         ops = [a["op"] for s in p["steps"] for a in s["actions"]]
         self.assertIn("save_draft", ops)
         self.assertNotIn("submit", ops)
+
+    def test_no_save_when_disabled(self):
+        p = build(save=False)
+        ops = [a["op"] for s in p["steps"] for a in s["actions"]]
+        self.assertNotIn("save_draft", ops)
 
     def test_bool_with_options_becomes_select(self):
         raw = json.loads(FIX.read_text(encoding="utf-8"))
@@ -162,6 +169,17 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(len(p["blocking"]), 1)
         self.assertIn("找不到文件", p["blocking"][0]["reason"])
 
+    def test_core_fields_required_even_if_page_says_optional(self):
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        values.delete_path(vals, "person.name")
+        values.delete_path(vals, "contact.phone")
+        raw = {"url": "x", "module": "基本信息",
+               "controls": [{"label": "姓名", "kind": "text", "required": False},
+                            {"label": "手机号码", "kind": "text", "required": False}]}
+        p = build(vals=vals, form=raw)
+        self.assertEqual(len(p["blocking"]), 2)
+        self.assertEqual(p["optional_missing"], [])
+
     def test_untagged_required_blocks(self):
         raw = {"url": "x", "module": "基本信息",
                "controls": [{"label": "", "kind": "text", "required": True}]}
@@ -202,6 +220,13 @@ class PlanTest(unittest.TestCase):
         text = review.render(p)
         self.assertIn("还没填", text)
         self.assertNotIn("缺值", text)
+
+    def test_review_masks_phone(self):
+        from jobpilot import review
+        p = build()
+        text = review.render(p)
+        self.assertIn("138****0000", text)
+        self.assertNotIn("13800000000", text)
 
     def test_empty_page_message(self):
         from jobpilot import review

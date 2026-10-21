@@ -51,6 +51,13 @@ class ScreenTest(unittest.TestCase):
         self.assertEqual(r["tier"], "不投")
         self.assertTrue(any("排除" in f for f in r["fails"]))
 
+    def test_why_is_set(self):
+        c = {"company": "甲", "position": "岗", "degree": "博士", "major_req": ["金融科技"],
+             "salary_low": 30, "salary_high": 40, "salary_sources": 2}
+        r = screen.evaluate(c, PROFILE)
+        self.assertEqual(r["tier"], "不投")
+        self.assertTrue(r["why"])
+
     def test_degree_fail(self):
         c = {"company": "甲", "position": "岗", "degree": "博士", "major_req": ["金融科技"],
              "salary_low": 30, "salary_high": 40, "salary_sources": 2}

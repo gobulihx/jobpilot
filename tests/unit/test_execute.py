@@ -32,6 +32,16 @@ class ExecuteTest(unittest.TestCase):
         run_plan(p, vals, backend, dry_run=True)
         self.assertFalse(any(item["op"] == "save_draft" for item in backend.log))
 
+    def test_save_action_with_null_expect(self):
+        p, vals = make_plan()
+        p = plan.compile_plan(formmodel.normalize(json.loads(FIX.read_text(encoding="utf-8"))),
+                              vals, sitecards.load("_generic"), save=True)
+        backend = FakeBackend()
+        result = run_plan(p, vals, backend, dry_run=False)
+        self.assertTrue(result["ok"], result["failed"])
+        self.assertEqual(result["filled"], 11)
+        self.assertTrue(any(item["op"] == "save_draft" for item in backend.log))
+
     def test_stale_plan_stops(self):
         p, vals = make_plan()
         values.set_value(vals, "person.name", "李四")
