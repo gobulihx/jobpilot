@@ -34,6 +34,18 @@ class MailboxTest(unittest.TestCase):
         self.assertEqual(mails[0]["snippet"], "请参加笔试")
         self.assertEqual(mails[0]["msgid"], "x1")
 
+    def test_json_envelopes_key(self):
+        data = {"envelopes": [{"id": "e1", "subject": "笔试", "from": "hr@example.com"}]}
+        path = Path(tempfile.mkdtemp()) / "m.json"
+        path.write_text(json.dumps(data), encoding="utf-8")
+        self.assertEqual(len(mailbox.load(path)), 1)
+
+    def test_jsonl(self):
+        path = Path(tempfile.mkdtemp()) / "m.jsonl"
+        path.write_text('{"id":"l1","subject":"面试"}\n{"id":"l2","subject":"笔试"}\n',
+                        encoding="utf-8")
+        self.assertEqual(len(mailbox.load(path)), 2)
+
     def test_directory_and_dedupe(self):
         tmp = Path(tempfile.mkdtemp())
         (tmp / "a.eml").write_text((FIX / "mail.eml").read_text(encoding="utf-8"),

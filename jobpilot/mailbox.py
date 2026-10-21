@@ -108,9 +108,27 @@ def _from_eml(msg: Message) -> dict:
 
 
 def _load_json(path: Path) -> list[dict]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    text = path.read_text(encoding="utf-8")
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        # 兼容 JSONL：一行一个对象
+        data = []
+        parsed = False
+        for line in text.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data.append(json.loads(line))
+                parsed = True
+            except json.JSONDecodeError:
+                continue
+        if not parsed:
+            raise ValueError("不是 JSON 或 JSONL")
     if isinstance(data, dict):
-        data = data.get("messages") or data.get("data") or data.get("items") or []
+        data = (data.get("messages") or data.get("envelopes") or data.get("data")
+                or data.get("items") or data.get("mails") or [])
     if not isinstance(data, list):
         return []
     out = []

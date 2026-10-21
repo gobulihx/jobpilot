@@ -115,7 +115,7 @@ rm -rf ~/.jobpilot
 ## 自己折腾
 
 ```bash
-python3 -m unittest discover -s tests -t .    # 129 个测试：124 单元 + 5 浏览器
+python3 -m unittest discover -s tests -t .    # 131 个测试：126 单元 + 5 浏览器
 python3 -m jobpilot privacy scan              # 仓库 PII 扫描
 ```
 
