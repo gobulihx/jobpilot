@@ -77,7 +77,7 @@ def cmd_init(args) -> int:
         _print(json.dumps(profile.questions_json(), ensure_ascii=False, indent=2))
         return 0
     if args.demo:
-        if (home.home() / "profile.json").exists() and not args.force:
+        if any((home.home() / n).exists() for n in ("profile.json", "values.json")) and not args.force:
             _print("你已经有档案了，演示会覆盖它。先换一个空目录再跑：")
             _print("  export JOBPILOT_HOME=$(mktemp -d)")
             return 2
@@ -591,7 +591,7 @@ def cmd_cards(args) -> int:
 
 # --------------------------------------------------------------------------- demo
 def cmd_demo(args) -> int:
-    if (home.home() / "profile.json").exists():
+    if any((home.home() / n).exists() for n in ("profile.json", "values.json")):
         _print("你已经有档案了，演示会盖掉它。先换一个空目录再跑：")
         _print("  export JOBPILOT_HOME=$(mktemp -d)")
         return 2
