@@ -264,10 +264,10 @@ python3 "$SKILL_DIR/bin/jobpilot" inbox --mails 邮件.json
 |---|---|
 | 没浏览器 | 出填写稿，用户自己粘 |
 | 没搜索 | 只读用户给的链接和本地文件 |
-| 没邮箱 | 提醒用户每周导出一次投递记录 |
+| 没邮箱 | 让用户用现成工具导出 JSON / EML / MBOX |
 | 没表格组件 | 导出 csv |
 
-## 说话方式
+## 具体怎么说
 
 - 第一句给结论，不铺垫。
 - 一次只讲一件事，细节写进文件。
@@ -284,7 +284,7 @@ python3 "$SKILL_DIR/bin/jobpilot" inbox --mails 邮件.json
 |---|---|
 | 档案与值 | `~/.jobpilot/profile.json`、`values.json`（600 权限） |
 | 台账 | `~/.jobpilot/ledger.db` |
-| 每次运行的计划与截图 | `~/.jobpilot/runs/<run_id>/`（700） |
+| 每次运行的计划与结果 | `~/.jobpilot/runs/<run_id>/`（700） |
 | 导出 | `~/.jobpilot/exports/` |
 | 本地覆盖（可选） | `~/.jobpilot/sites/`；大多数站不需要 |
 
