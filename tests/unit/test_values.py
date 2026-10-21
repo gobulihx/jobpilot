@@ -46,6 +46,9 @@ class ValuesTest(unittest.TestCase):
         self.assertEqual(values.coerce("person.height", "18,0"), "180")
         self.assertIs(values.coerce("flags.fresh_grad", "是"), True)
         self.assertIs(values.coerce("flags.fresh_grad", "否"), False)
+        self.assertEqual(values.coerce("intent.employer_types", "银行,券商"),
+                         ["银行", "券商"])
+        self.assertEqual(values.coerce("intent.exclude", "外包，小贷"), ["外包", "小贷"])
 
     def test_custom_field(self):
         path = values.add_custom(self.v, "GRE", value="320", aliases=["GRE成绩"])

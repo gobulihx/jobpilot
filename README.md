@@ -144,7 +144,7 @@ CLI 本身不联网搜索，也不检测你装了哪个搜索工具。
 ## 开发
 
 ```bash
-python3 -m unittest discover -s tests -t .    # 112 个测试：107 单元 + 5 浏览器
+python3 -m unittest discover -s tests -t .    # 114 个测试：109 单元 + 5 浏览器
 python3 -m jobpilot privacy scan              # 仓库 PII 扫描
 ```
 

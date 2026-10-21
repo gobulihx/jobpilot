@@ -51,8 +51,10 @@ def cmd_doctor(args) -> int:
         _print(json.dumps(info["capabilities"], ensure_ascii=False, indent=2))
     else:
         for line in info["summary"]:
+            if args.brief and line.startswith("本地覆盖"):
+                continue
             _print(line)
-        if not info["capabilities"].get("browser_ready"):
+        if not args.brief and not info["capabilities"].get("browser_ready"):
             _print("")
             _print(doctor.install_hint())
     return 0
@@ -95,7 +97,7 @@ def cmd_init(args) -> int:
             _print(f"  · {schema.label_for(path)}")
     else:
         _print("现在就能问：今天有什么能投的。")
-    _print(f"数据放在：{home.home()}")
+    _print("数据都在本机，不会上传。")
     return 0
 
 
@@ -337,11 +339,11 @@ def cmd_ledger(args) -> int:
             if not rows:
                 _print("还没有记录。")
                 return 0
-            _print("日期        公司                  岗位                     状态")
             for r in rows:
-                _print(f"{(r.get('applied_at') or r['created_at'] or '')[:10]:12}"
-                       f"{r['company'][:20]:22}{r['position'][:24]:26}"
-                       f"{ledger.STATUS_LABEL.get(r['status'], r['status'])}")
+                date = (r.get("applied_at") or r["created_at"] or "")[:10]
+                city = f"（{r['city']}）" if r.get("city") else ""
+                _print(f"{date} {r['company']} · {r['position']}{city}"
+                       f" — {ledger.STATUS_LABEL.get(r['status'], r['status'])}")
             return 0
         if args.action == "check":
             if not args.company:
@@ -578,6 +580,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     d = sub.add_parser("doctor", help="看看现在能做什么")
     d.add_argument("--json", action="store_true")
+    d.add_argument("--brief", action="store_true", help="只说现在能做什么")
     d.set_defaults(func=cmd_doctor)
 
     i = sub.add_parser("init", help="建档案（12 个字段）")

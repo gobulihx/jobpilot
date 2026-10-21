@@ -56,7 +56,10 @@ def _section(lines: list[str], title: str, items: list[dict], limit: int | None 
 def render(plan: dict, masked: bool = True) -> str:
     lines = []
     total = plan.get("stats", {}).get("actions", 0)
-    lines.append(f"共 {total} 项，准备填 {plan.get('url', '这个页面')}。")
+    if total:
+        lines.append(f"共 {total} 项，准备填 {plan.get('url', '这个页面')}。")
+    else:
+        lines.append("这一页没有能自动填的字段，先看看下面缺什么。")
     for step in plan.get("steps", []):
         if not step["actions"]:
             continue

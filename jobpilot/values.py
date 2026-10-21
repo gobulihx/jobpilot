@@ -226,6 +226,10 @@ def coerce(path: str, raw):
     s = raw.strip()
     if not s:
         return raw
+    if f.type == "list":
+        if isinstance(raw, list):
+            return raw
+        return [x.strip() for x in s.replace("，", ",").split(",") if x.strip()]
     if f.type in ("date", "month"):
         s2 = re.sub(r"[年月/.]", "-", s).rstrip("-")
         m = re.match(r"^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$", s2)

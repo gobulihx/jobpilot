@@ -35,6 +35,12 @@ class CliTest(unittest.TestCase):
         self.assertIn("python", data)
         self.assertTrue(data["home_writable"])
 
+    def test_doctor_brief_has_no_commands(self):
+        code, out = self.run_cli("doctor", "--brief")
+        self.assertEqual(code, 0)
+        self.assertNotIn("pip install", out)
+        self.assertIn("自动填表", out)
+
     def test_init_demo_writes_600(self):
         code, out = self.run_cli("init", "--demo")
         self.assertEqual(code, 0)

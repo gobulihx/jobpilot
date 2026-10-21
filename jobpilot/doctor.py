@@ -58,7 +58,7 @@ def summary(caps: dict) -> list[str]:
     else:
         lines.append("自动填表：还没准备。想用就装一下，不想装也能生成填写稿。")
     lines.append("表格导出：" + ("能用" if caps["xlsx"] else "先用 csv，装上表格组件后可以导出 Excel。"))
-    lines.append(f"数据目录：{caps['home']}（{'可写' if caps['home_writable'] else '不可写'}）")
+    lines.append("数据：只在本机，不会上传")
     lines.append(f"本地覆盖：{caps['sitecards']} 张（大多数站不需要）")
     lines.append("搜索：看助手手上有没有搜索工具；有就直接用，没有就只读你给的链接。")
     return lines

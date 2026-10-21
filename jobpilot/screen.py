@@ -111,14 +111,20 @@ def evaluate(candidate: dict, profile: dict) -> dict:
         if not major_ok:
             reasons.append(f"专业要求 {('、'.join(major))}，你的是 {my_major}（自行判断）")
 
-    exclude = [str(x) for x in (profile.get("exclude") or []) if str(x).strip()]
+    raw_exclude = profile.get("exclude") or []
+    if isinstance(raw_exclude, str):
+        raw_exclude = [raw_exclude]
+    exclude = [str(x) for x in raw_exclude if str(x).strip()]
     haystack = f"{candidate.get('company', '')}{candidate.get('position', '')}{city}"
     for term in exclude:
         if term in haystack:
             fails.append(f"在你排除的清单里：{term}")
             break
 
-    types = [str(x) for x in (profile.get("employer_types") or []) if str(x).strip()]
+    raw_types = profile.get("employer_types") or []
+    if isinstance(raw_types, str):
+        raw_types = [raw_types]
+    types = [str(x) for x in raw_types if str(x).strip()]
     category = str(candidate.get("category", "") or "")
     if types and category and not any(t in category for t in types):
         reasons.append(f"机构类型 {category} 不在你的偏好里（不是硬伤）")

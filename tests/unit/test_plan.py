@@ -194,6 +194,12 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(act["op"], "select")
         self.assertEqual(act["value"], "是")
 
+    def test_empty_page_message(self):
+        from jobpilot import review
+        raw = {"url": "x", "module": "基本信息", "controls": []}
+        p = build(form=raw)
+        self.assertIn("没有能自动填", review.render(p))
+
     def test_explain_is_readable(self):
         lines = plan.explain(build())
         self.assertTrue(any("最高学历" in line for line in lines))
