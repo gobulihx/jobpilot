@@ -221,13 +221,14 @@ python3 "$SKILL_DIR/bin/jobpilot" sheet 计划.json
 
 用户点头就按 `references/browser-setup.md` 带他装（装到运行 jobpilot 的那个 Python 里）；
 不点头就出填写稿，以后不再提。**不代改 MCP 配置，不静默安装。**
+第一次自动开专用浏览器时，让用户登录一次，之后会记住。
 
 **执行完不要关浏览器、不要关标签页。** 告诉用户「页面留着，你看一眼，没问题自己点提交」。
+用户说「保存吧」→ 同一份计划加 `--save-draft` 再跑一次，已完成的动作会跳过。
 
 用户点完提交后，问一句「投出去了吗？」：
 - 投了 → `ledger add --status submitted`，有回执号就带上 `--external-id`；
 - 没投 → 保持草稿，不要自己标成已投递。
-第一次自动开专用浏览器时，让用户登录一次，之后会记住。
 
 站点知识见 `references/apply-playbook.md`。**默认为空**：字段靠字段表，怪行为靠通用规则。
 只有遇到标签/按钮特别怪的站，才在本机写一张覆盖（`~/.jobpilot/sites/<域名>.json`），不要提交进仓库。
