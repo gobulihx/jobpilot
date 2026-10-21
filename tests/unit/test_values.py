@@ -40,6 +40,13 @@ class ValuesTest(unittest.TestCase):
         self.assertIsNone(values.check_value("intent.adjust", "是"))
         self.assertIsNotNone(values.check_value("intent.adjust", "也许"))
 
+    def test_coerce_natural_input(self):
+        self.assertEqual(values.coerce("education.0.grad_date", "2026年11月"), "2026-11")
+        self.assertEqual(values.coerce("person.birth_date", "2002/2/15"), "2002-02-15")
+        self.assertEqual(values.coerce("person.height", "18,0"), "180")
+        self.assertIs(values.coerce("flags.fresh_grad", "是"), True)
+        self.assertIs(values.coerce("flags.fresh_grad", "否"), False)
+
     def test_custom_field(self):
         path = values.add_custom(self.v, "GRE", value="320", aliases=["GRE成绩"])
         self.assertEqual(path, "custom.gre")

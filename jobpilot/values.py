@@ -218,6 +218,34 @@ def skip(values: dict, path: str, on: bool = True) -> None:
     values["skipped"] = sorted(current)
 
 
+def coerce(path: str, raw):
+    """把用户常见的自然写法收敛成标准值。"""
+    f = schema.field_for(path)
+    if not f or not isinstance(raw, str):
+        return raw
+    s = raw.strip()
+    if not s:
+        return raw
+    if f.type in ("date", "month"):
+        s2 = re.sub(r"[年月/.]", "-", s).rstrip("-")
+        m = re.match(r"^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$", s2)
+        if m:
+            year, month, day = m.group(1), int(m.group(2)), m.group(3)
+            out = f"{int(year):04d}-{month:02d}"
+            if f.type == "date" and day:
+                out += f"-{int(day):02d}"
+            return out
+    if f.type == "number":
+        cleaned = s.replace(",", "").replace("，", "").strip()
+        return cleaned
+    if f.type == "bool":
+        if s in ("是", "有", "true", "True", "1", "yes"):
+            return True
+        if s in ("否", "无", "false", "False", "0", "no"):
+            return False
+    return raw
+
+
 def check_value(path: str, raw, values: dict | None = None) -> str | None:
     """检查单个值能不能写；返回一句问题，没问题返回 None。"""
     f = schema.field_for(path)

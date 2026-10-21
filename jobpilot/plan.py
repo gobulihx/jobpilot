@@ -80,6 +80,8 @@ def _build_action(control: dict, path: str, value, entry, card: dict):
     }
     warning = None
 
+    if op == "select" and isinstance(value, bool):
+        value = "是" if value else "否"
     if isinstance(value, list):
         if op == "select":
             value = value[0] if value else ""
@@ -97,7 +99,8 @@ def _build_action(control: dict, path: str, value, entry, card: dict):
         chosen, how = choose_option(value, control.get("options", []))
         if chosen is None:
             return None, {"cid": control["cid"], "label": control["label"],
-                          "reason": f"选项里没有「{value}」", "value": value}, None
+                          "reason": f"选项里没有「{value}」", "value": value,
+                          "options": control.get("options", [])}, None
         action["value"] = chosen
         action["match"] = how
     elif op == "pick_date":
@@ -111,7 +114,15 @@ def _build_action(control: dict, path: str, value, entry, card: dict):
         action["path"] = path_value
         action["value"] = "/".join(path_value)
     elif op == "upload":
-        action["file"] = str(value)
+        from pathlib import Path as _Path
+        file_path = _Path(str(value)).expanduser()
+        if not file_path.exists():
+            return None, {"cid": control["cid"], "label": control["label"],
+                          "reason": f"找不到文件：{value}"}, None
+        size = file_path.stat().st_size
+        if size > 10 * 1024 * 1024:
+            warning = f"「{control['label']}」有 {size // 1024 // 1024} MB，可能超过站点上限"
+        action["file"] = str(file_path)
     elif op == "check":
         action["value"] = _as_bool(value)
 

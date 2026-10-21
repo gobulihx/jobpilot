@@ -176,6 +176,23 @@ class CliTest(unittest.TestCase):
         data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
         self.assertIn("narratives.hobby", data["skipped"])
 
+    def test_ledger_check(self):
+        self.run_cli("ledger", "add", "--company", "示例银行", "--position", "风险岗")
+        code, out = self.run_cli("ledger", "check", "--company", "示例银行",
+                                 "--position", "风险岗")
+        self.assertEqual(code, 1)
+        self.assertIn("投过了", out)
+        code, out = self.run_cli("ledger", "check", "--company", "另一家")
+        self.assertEqual(code, 0)
+        self.assertIn("没投过", out)
+
+    def test_values_coerce_on_write(self):
+        self.run_cli("init", "--demo")
+        code, out = self.run_cli("values", "set", "education.0.grad_date", "2026年11月")
+        self.assertEqual(code, 0)
+        data = json.loads((Path(self.home) / "values.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["education"][0]["grad_date"]["v"], "2026-11")
+
     def test_ledger_and_export(self):
         self.assertEqual(self.run_cli("ledger", "add", "--company", "甲", "--position", "岗")[0], 0)
         self.assertEqual(self.run_cli("ledger", "add", "--company", "甲", "--position", "岗")[0], 0)

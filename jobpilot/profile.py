@@ -84,7 +84,7 @@ def _as_value(field_path: str, raw):
         if isinstance(raw, bool):
             return raw
         return str(raw).strip() in ("是", "有", "true", "1")
-    return raw
+    return values.coerce(field_path, raw)
 
 
 def _seed_values(profile: dict) -> dict:

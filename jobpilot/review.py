@@ -40,6 +40,11 @@ def _section(lines: list[str], title: str, items: list[dict], limit: int | None 
                 break
             hint = _type_hint(u)
             suggest = f"，建议「{u['suggest']}」" if u.get("suggest") else ""
+            options = u.get("options") or []
+            if options:
+                shown = "、".join(str(x) for x in options[:6])
+                more = " 等" if len(options) > 6 else ""
+                suggest += f"；可选：{shown}{more}"
             lines.append(f"  · {u['label']}{hint}：{u['reason']}{suggest}")
             shown += 1
     if limit is not None and len(items) > limit:

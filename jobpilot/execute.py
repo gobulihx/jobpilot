@@ -52,17 +52,21 @@ def _resolve_action(plan: dict, action: dict, vals: dict) -> dict:
     ok, current = values_mod.resolve(vals, ref)
     if not ok:
         raise ExecuteError("missing_value", ref)
-    if "value" in action and action["value"] != current:
-        # 允许列表被渲染成字符串；允许「是/否」与布尔互转
-        if isinstance(current, list) and action["value"] == "、".join(map(str, current)):
-            pass
-        elif action["op"] == "check" and bool(action["value"]) == (
+    display = current
+    if isinstance(current, list):
+        display = "、".join(str(x) for x in current)
+    elif isinstance(current, bool) and action["op"] in ("select", "type"):
+        display = "是" if current else "否"
+
+    if "value" in action and action["value"] != display:
+        # 允许「是/否」与布尔互转
+        if action["op"] == "check" and bool(action["value"]) == (
                 str(current).strip().lower() in ("是", "有", "true", "1")):
             pass
         else:
             raise ExecuteError("stale_plan", f"{ref} 的值变了，请重新生成计划")
     action = dict(action)
-    action["value"] = current if not isinstance(current, list) else "、".join(map(str, current))
+    action["value"] = display
     return action
 
 

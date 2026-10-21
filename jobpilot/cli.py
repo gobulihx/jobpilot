@@ -117,10 +117,11 @@ def cmd_values(args) -> int:
         if not args.path or args.value is None:
             _print("用法：values set 字段路径 值")
             return 2
-        if issue := values_mod.check_value(args.path, args.value):
+        raw = values_mod.coerce(args.path, args.value)
+        if issue := values_mod.check_value(args.path, raw, vals):
             _print(issue)
             return 2
-        values_mod.set_value(vals, args.path, args.value)
+        values_mod.set_value(vals, args.path, raw)
         home.write_json(_values_path(), vals)
         _print(f"记下了：{values_mod.label_of(vals, args.path)}")
         return 0
@@ -137,7 +138,8 @@ def cmd_values(args) -> int:
         if not args.file:
             _print("给一个答案文件（--file answers.json）")
             return 2
-        data = _load_json_arg(args.file, {})
+        data = {path: values_mod.coerce(path, raw)
+                for path, raw in _load_json_arg(args.file, {}).items()}
         issues = [(path, values_mod.check_value(path, raw, vals)) for path, raw in data.items()]
         issues = [(path, msg) for path, msg in issues if msg]
         if issues:
@@ -306,7 +308,7 @@ def cmd_run(args) -> int:
             _print(f"  · {label}：没填上。要不要换种填法，或者你自己填？")
         _print("停在出错的地方了，改完可以接着来。")
         return 1
-    _print("都填好了，停在提交前。")
+    _print("都填好了，停在提交前。投完跟人家说一声，人家把这一笔记下来。")
     return 0
 
 
@@ -326,7 +328,8 @@ def cmd_ledger(args) -> int:
         if args.action == "add":
             app_id, created = db.add(args.company, args.position, args.city or "",
                                      args.batch or "", url=args.url or "",
-                                     status=args.status or "draft")
+                                     status=args.status or "draft",
+                                     external_id=args.external_id or "")
             _print(("新建：" if created else "已经记过，更新了一下：") + app_id)
             return 0
         if args.action == "list":
@@ -340,6 +343,19 @@ def cmd_ledger(args) -> int:
                        f"{r['company'][:20]:22}{r['position'][:24]:26}"
                        f"{ledger.STATUS_LABEL.get(r['status'], r['status'])}")
             return 0
+        if args.action == "check":
+            if not args.company:
+                _print("要查哪家公司？（--company）")
+                return 2
+            hits = db.find_all(args.company, args.position or "", args.city or "")
+            if not hits:
+                _print("没投过，可以投。")
+                return 0
+            for hit in hits:
+                date = (hit.get("applied_at") or hit.get("created_at") or "")[:10]
+                _print(f"投过了：{date} {hit['company']} · {hit['position']} "
+                       f"（{ledger.STATUS_LABEL.get(hit['status'], hit['status'])}）")
+            return 1
         if args.action == "funnel":
             _print(json.dumps(db.funnel(), ensure_ascii=False, indent=2))
             return 0
@@ -431,7 +447,8 @@ def cmd_extras(args) -> int:
     if not args.answers:
         _print("给一个答案文件（--answers answers.json）")
         return 2
-    data = _load_json_arg(args.answers, {})
+    data = {path: values_mod.coerce(path, raw)
+            for path, raw in _load_json_arg(args.answers, {}).items()}
     vals = home.read_json(_values_path(), values_mod.empty()) or values_mod.empty()
     issues = [(path, values_mod.check_value(path, raw, vals)) for path, raw in data.items()]
     issues = [(path, msg) for path, msg in issues if msg]
@@ -617,13 +634,14 @@ def build_parser() -> argparse.ArgumentParser:
     ve.set_defaults(func=cmd_verify)
 
     lg = sub.add_parser("ledger", help="投递台账")
-    lg.add_argument("action", choices=["add", "list", "funnel", "export"])
+    lg.add_argument("action", choices=["add", "list", "check", "funnel", "export"])
     lg.add_argument("--company")
     lg.add_argument("--position")
     lg.add_argument("--city")
     lg.add_argument("--batch")
     lg.add_argument("--url")
     lg.add_argument("--status")
+    lg.add_argument("--external-id")
     lg.add_argument("--out")
     lg.set_defaults(func=cmd_ledger)
 

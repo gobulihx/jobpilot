@@ -106,6 +106,14 @@ python3 "$SKILL_DIR/bin/jobpilot" screen --candidates 候选.json --salary-min 2
 MCP 探测的写法：把 `runner/probe.js` 的内容交给浏览器工具执行，返回的 JSON 原样保存，
 `plan --form` 会自己规范化。
 
+**先查重。** 知道公司/岗位后，先看一眼台账：
+
+```bash
+python3 "$SKILL_DIR/bin/jobpilot" ledger check --company "某银行" --position "风险岗"
+```
+
+投过就问一句：「这个岗位 10-12 投过，现在是已投递，还要再投吗？」用户说不用就停。
+
 ```bash
 # 1. 认页面：有本地浏览器时直接探测
 python3 "$SKILL_DIR/bin/jobpilot" probe --url "https://..."
@@ -187,6 +195,10 @@ python3 "$SKILL_DIR/bin/jobpilot" sheet 计划.json
 **执行失败就停**，不要重试到天荒地老，也不要用别的方法硬填同一个框。
 
 **执行完不要关浏览器、不要关标签页。** 告诉用户「页面留着，你看一眼，没问题自己点提交」。
+
+用户点完提交后，问一句「投出去了吗？」：
+- 投了 → `ledger add --status submitted`，有回执号就带上 `--external-id`；
+- 没投 → 保持草稿，不要自己标成已投递。
 第一次自动开专用浏览器时，让用户登录一次，之后会记住。
 
 站点知识见 `references/apply-playbook.md`。**默认为空**：字段靠字段表，怪行为靠通用规则。

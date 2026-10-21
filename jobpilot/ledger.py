@@ -158,6 +158,18 @@ class Ledger:
             (company,)).fetchone()
         return dict(row) if row else None
 
+    def find_all(self, company: str, position: str = "", city: str = "") -> list[dict]:
+        out = []
+        for row in self.list():
+            if _norm(row["company"]) != _norm(company):
+                continue
+            if position and _norm(row["position"]) != _norm(position):
+                continue
+            if city and _norm(row["city"]) != _norm(city):
+                continue
+            out.append(row)
+        return out
+
     def list(self, status: str | None = None) -> list[dict]:
         if status:
             rows = self.conn.execute(

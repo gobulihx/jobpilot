@@ -29,6 +29,12 @@ class LedgerTest(unittest.TestCase):
         self.assertTrue(app["applied_at"])
         self.assertEqual(len(self.db.events(app_id)), 3)
 
+    def test_find_all(self):
+        self.db.add("示例银行", "风险岗", "杭州", "2027")
+        self.assertEqual(len(self.db.find_all("示例 银行", "风险岗")), 1)
+        self.assertEqual(self.db.find_all("示例银行", "别的岗"), [])
+        self.assertEqual(len(self.db.find_all("示例银行")), 1)
+
     def test_funnel(self):
         a, _ = self.db.add("甲", "岗一", "杭州", "2027", status="submitted")
         b, _ = self.db.add("乙", "岗二", "上海", "2027", status="interview")

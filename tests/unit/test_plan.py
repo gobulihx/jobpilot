@@ -151,6 +151,16 @@ class PlanTest(unittest.TestCase):
         p = build(vals=vals, form=raw)
         self.assertEqual(len(p["blocking"]), 1)
         self.assertIn("选项里没有", p["blocking"][0]["reason"])
+        self.assertEqual(p["unmapped"][0]["options"], ["本科", "博士"])
+
+    def test_missing_upload_blocks(self):
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        values.set_value(vals, "person.photo", "/no/such/photo.jpg")
+        raw = {"url": "x", "module": "基本信息",
+               "controls": [{"label": "证件照", "kind": "file", "required": True}]}
+        p = build(vals=vals, form=raw)
+        self.assertEqual(len(p["blocking"]), 1)
+        self.assertIn("找不到文件", p["blocking"][0]["reason"])
 
     def test_untagged_required_blocks(self):
         raw = {"url": "x", "module": "基本信息",
@@ -172,6 +182,17 @@ class PlanTest(unittest.TestCase):
         p = build(form=raw)
         self.assertEqual(len(p["blocking"]), 1)
         self.assertIsNone(p["blocking"][0]["path"])
+
+    def test_bool_true_on_select_becomes_yes(self):
+        raw = {"url": "x", "module": "基本信息",
+               "controls": [{"label": "是否服从调剂", "kind": "bool", "required": True,
+                             "options": ["是", "否"]}]}
+        vals = profile._seed_values(profile.DEMO_PROFILE)
+        values.set_value(vals, "intent.adjust", True, type_="bool")
+        p = build(vals=vals, form=raw)
+        act = p["steps"][0]["actions"][0]
+        self.assertEqual(act["op"], "select")
+        self.assertEqual(act["value"], "是")
 
     def test_explain_is_readable(self):
         lines = plan.explain(build())
